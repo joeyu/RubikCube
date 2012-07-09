@@ -1,0 +1,402 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Rubic Cube</title>
+  <style type="text/css" media="screen">
+    body {
+      background-color: black;
+      color: white;
+      font-family: 'Lucida Grande', Verdana, Arial;
+      font-size: 12px;
+      background-image: -webkit-gradient(radial,
+                            50% 500, 1,
+                            50% 500, 400,
+                            from(rgba(255, 255, 255, 0.3)),
+                            to(rgba(255, 255, 255, 0)));
+     background-repeat: no-repeat;
+    }
+
+    #container {
+      width: 100%;
+      height: 700px;
+      -webkit-perspective: 800; /* For compatibility with iPhone 3.0, we leave off the units here */
+      -webkit-perspective-origin: 50% 0%;
+    }
+    #stage {
+      width: 100%;
+      height: 100%;
+      -webkit-transition: -webkit-transform 2s;
+      -webkit-transform-style: preserve-3d;
+    }
+    
+    #shape {
+        position: relative;
+        top: 200px;
+        margin: 0 auto;
+        height: 100px;
+        width: 100px;
+        border: 1px solid white;
+        -webkit-transform-style: preserve-3d;
+    }
+    
+    .block {
+        position: absolute;
+        height: 100px;
+        width: 100px;
+/*
+        border: 1px solid cyan;
+*/
+        -webkit-transform-style: preserve-3d;
+    }
+
+    .plane {
+        position: absolute;
+        margin: 2px;
+        height: 96px;
+        width: 96px;
+        -webkit-border-radius: 12px;
+        -webkit-box-sizing: border-box;
+        text-align: center;
+        vertical-align: middle;
+        font-family: Times, serif;
+        font-size: 24pt;
+        color: black;
+        opacity:0.8;
+        -webkit-transition: -webkit-transform 2s, opacity 2s;
+        -webkit-backface-visibility: hidden;
+    }
+
+    #shape.backfaces .plane {
+      -webkit-backface-visibility: visible;
+    }
+    
+    #shape {
+/*
+        -webkit-animation: spin 32s infinite linear;
+        -webkit-transform: rotateY(-30deg);
+*/
+    }
+
+    @-webkit-keyframes spin {
+      from { -webkit-transform: rotateY(0); }
+      to   { -webkit-transform: rotateY(-360deg); }
+    }
+
+    /* plane colors */
+    .plane.yellow {
+        background-color: yellow;
+    }
+    .plane.white {
+        background-color: white;
+    }
+    .plane.blue {
+        background-color: blue;
+    }
+    .plane.green {
+        background-color: green;
+    }
+    .plane.red {
+        background-color: red;
+    }
+    .plane.orange {
+        background-color: darkorange;
+    }
+
+    .controls {
+      width: 80%;
+      margin: 0 auto;
+      padding: 5px 20px;
+      -webkit-border-radius: 12px;
+      background-color: rgba(255, 255, 255, 0.5);
+    }
+    .controls > div {
+      margin: 10px;
+    }
+    </style>
+
+    <script src="jquery-1.7.2.js"></script> 
+    <script type="text/javascript" charset="utf-8">
+    $(document).ready(function() {
+        var planes = [
+            [
+                [['blue', 'yellow',  'orange'], ['', 'yellow', 'orange'], ['green', 'yellow', 'orange'],],
+                [['blue', '',        'orange'], ['', '',       'orange'], ['green', '',       'orange'],],
+                [['blue', 'white',   'orange'], ['', 'white',  'orange'], ['green', 'white',  'orange'],],
+            ],
+            [
+                [['blue', 'yellow',  ''], ['', 'yellow', ''], ['green', 'yellow', ''],],
+                [['blue', '',        ''], ['', '',       ''], ['green', '',       ''],],
+                [['blue', 'white',   ''], ['', 'white',  ''], ['green', 'white',  ''],],
+            ],
+            [
+                [['blue', 'yellow',  'red'], ['', 'yellow', 'red'], ['green', 'yellow', 'red'],],
+                [['blue', '',        'red'], ['', '',       'red'], ['green', '',       'red'],],
+                [['blue', 'white',   'red'], ['', 'white',  'red'], ['green', 'white',  'red'],],
+            ],
+        ];
+        var m;
+        var x, y, z;
+        var i;
+        var eBlock, ePlane;
+        var plane;
+        var blocks = [[[],[],[]],[[],[],[]],[[],[],[]]];
+        for (z = 0; z < 3; ++ z) {
+            for (y = 0; y < 3; ++ y) {
+                for (x = 0; x < 3; ++ x) {
+                    eBlock = $("<div class='block'/>");
+                    for (i = 0; i < 3; i ++ ) {
+                        plane = planes[z][y][x][i];
+
+                        eBlock.addClass(plane);
+
+                        ePlane = $("<div class='plane'/>");
+                        ePlane.addClass(plane);
+                        switch (plane) {
+                            case 'green':
+                                m = 'matrix3d(0,0,-1,0,  0,1,0,0,  1,0,0,0,  50,0,0,1)';
+                                break;
+                            case 'blue':
+                                m = 'matrix3d(0,0,1,0,  0,1,0,0,  -1,0,0,0,  -50,0,0,1)';
+                                break;
+                            case 'white':
+                                m = 'matrix3d(1,0,0,0,  0,0,-1,0,  0,1,0,0,  0,50,0,1)';
+                                break;
+                            case 'yellow':
+                                m = 'matrix3d(1,0,0,0,  0,0,1,0,  0,-1,0,0,  0,-50,0,1)';
+                                break;
+                            case 'red':
+                                m = 'matrix3d(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,50,1)';
+                                break;
+                            case 'orange':
+                                m = 'matrix3d(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,-50,1)';
+                                break;
+                            default:
+                                break;
+                        }
+
+                        ePlane.css("-webkit-transform", m);
+                        ePlane.appendTo(eBlock);
+                    }
+                    m = 'matrix3d(1,0,0,0,  0,1,0,0,  0,0,1,0,  ' + (x - 1) * 100 + ',' + (y - 1) * 100 + ',' + (z - 1) * 100 + ',1)';
+                    eBlock.css("-webkit-transform", m);
+                    eBlock.appendTo("#shape");
+                    blocks[z][y][x] = eBlock;
+                }
+            }
+        }
+                    
+        //var planes = [
+        //    ['green'], ['blue'], ['white'], ['yellow'], ['red'], ['orange'], 
+
+        //    ['white', 'red'], ['red',  'yellow'], ['yellow',  'orange'], ['orange',    'white'],
+        //    ['red',  'green'], ['green',     'orange'], ['orange', 'blue'], ['blue', 'red'],
+        //    ['green',   'white' ], ['white',   'blue'], ['blue', 'yellow'], ['yellow',     'green'],
+
+        //    ['green', 'white', 'red'],  ['white', 'blue', 'red'], ['blue', 'yellow', 'red'], ['yellow', 'green', 'red'],
+        //    ['green', 'white',  'orange'],  ['white', 'blue',  'orange'], ['blue', 'yellow',  'orange'], ['yellow', 'green',  'orange'],
+        //];
+        //var blocks = [];
+        //var i, j;
+        //var elem;
+
+        //// Create blocks
+        //for (i = 0; i < planes.length; i ++) {
+        //    elem = $("<div class='block'/>");
+        //    for (j = 0; j < planes[i].length; j ++ ) {
+        //        elem.addClass(planes[i][j]);
+        //    }
+        //    elem.appendTo("#shape");
+        //    blocks.push({
+        //        elem:   elem, 
+        //        planes: planes[i]
+        //    });
+        //}
+        //// Transform the blocks
+        //var blockMatrices = [
+        //    // single planes
+        //    "matrix3d( 0,  0, -1, 0,    0,  1,  0, 0,    1,  0,  0, 0,    100,    0,    0, 1)", // green
+        //    "matrix3d( 0,  0,  1, 0,    0,  1,  0, 0,   -1,  0,  0, 0,   -100,    0,    0, 1)", // blue
+        //    "matrix3d( 1,  0,  0, 0,    0,  0, -1, 0,    0,  1,  0, 0,      0,  100,    0, 1)", // white
+        //    "matrix3d( 1,  0,  0, 0,    0,  0,  1, 0,    0, -1,  0, 0,      0, -100,    0, 1)", // yellow
+        //    "matrix3d( 1,  0,  0, 0,    0,  1,  0, 0,    0,  0,  1, 0,      0,    0,  100, 1)", // red
+        //    "matrix3d(-1,  0,  0, 0,    0,  1,  0, 0,    0,  0, -1, 0,      0,    0, -100, 1)", // orange
+
+        //    // double planes
+        //    "matrix3d( 1,  0,  0, 0,    0,  0, -1, 0,    0,  1,  0, 0,      0,  100,  100, 1)", // white red
+        //    "matrix3d( 1,  0,  0, 0,    0,  1,  0, 0,    0,  0,  1, 0,      0, -100,  100, 1)", // red yellow
+        //    "matrix3d( 1,  0,  0, 0,    0,  0,  1, 0,    0, -1,  0, 0,      0, -100, -100, 1)", // yellow orange
+        //    "matrix3d( 1,  0,  0, 0,    0, -1,  0, 0,    0,  0, -1, 0,      0,  100, -100, 1)", // orange white
+
+        //    "matrix3d( 0,  1,  0, 0,   -1,  0,  0, 0,    0,  0,  1, 0,    100,    0,  100, 1)", // red green
+        //    "matrix3d( 0,  1,  0, 0,    0,  0,  1, 0,    1,  0,  0, 0,    100,    0, -100, 1)", // green orange
+        //    "matrix3d( 0, -1,  0, 0,    1,  0,  0, 0,    0,  0, -1, 0,   -100,    0, -100, 1)", // orange blue
+        //    "matrix3d( 0,  1,  0, 0,    0,  0, -1, 0,   -1,  0,  0, 0,   -100,    0,  100, 1)", // blue red
+
+        //    "matrix3d( 0,  0,  1, 0,    0, -1,  0, 0,    1,  0,  0, 0,    100,  100,    0, 1)", // green white
+        //    "matrix3d( 0,  0,  1, 0,    1,  0,  0, 0,    0,  1,  0, 0,   -100,  100,    0, 1)", // white blue
+        //    "matrix3d( 0,  0,  1, 0,    0,  1,  0, 0,   -1,  0,  0, 0,   -100, -100,    0, 1)", // blue yellow
+        //    "matrix3d( 0,  0,  1, 0,   -1,  0,  0, 0,    0, -1,  0, 0,    100, -100,    0, 1)", // yellow green
+
+        //    // triple planes
+        //    "matrix3d( 0,  0,  1, 0,    0, -1,  0, 0,    1,  0,  0, 0,    100,  100,  100, 1)", // green white red
+        //    "matrix3d( 0,  0,  1, 0,    1,  0,  0, 0,    0,  1,  0, 0,   -100,  100,  100, 1)", // white blue red 
+        //    "matrix3d( 0,  0,  1, 0,    0,  1,  0, 0,   -1,  0,  0, 0,   -100, -100,  100, 1)", // blue yellow red
+        //    "matrix3d( 0,  0,  1, 0,   -1,  0,  0, 0,    0, -1,  0, 0,    100, -100,  100, 1)", // yellow green red
+
+        //    "matrix3d( 0,  0, -1, 0,    0, -1,  0, 0,    1,  0,  0, 0,    100,  100, -100, 1)", // green white orange
+        //    "matrix3d( 0,  0, -1, 0,    1,  0,  0, 0,    0,  1,  0, 0,   -100,  100, -100, 1)", // white blue orange 
+        //    "matrix3d( 0,  0, -1, 0,    0,  1,  0, 0,   -1,  0,  0, 0,   -100, -100, -100, 1)", // blue yellow orange
+        //    "matrix3d( 0,  0, -1, 0,   -1,  0,  0, 0,    0, -1,  0, 0,    100, -100, -100, 1)", // yellow green orange
+        //];
+        //for (i = 0; i < blocks.length; i ++) {
+        //    blocks[i].elem.css("-webkit-transform", blockMatrices[i]);
+        //}
+        //// Create planes and add them to each center block
+        //for (i = 0; i < blocks.length; i ++) {
+        //    for (j = 0; j < planes[i].length; j ++ ) {
+        //        elem = $("<div class='plane'/>");
+        //        elem.addClass(planes[i][j]);
+        //        if (j == 0) {
+        //            elem.css("-webkit-transform", "matrix3d(1, 0,  0, 0,    0,  1, 0, 0,   0,  0,  1, 0,     0,   0, 50, 1)");
+        //        } else if (j == 1) {
+        //            elem.css("-webkit-transform", "matrix3d(1, 0,  0, 0,    0,  0, 1, 0,   0, -1,  0, 0,     0, -50,  0, 1)");
+        //        } else if (j == 2) {
+        //            elem.css("-webkit-transform", "matrix3d(0, 0, -1, 0,    0,  1, 0, 0,   1,  0,  0, 0,    50,   0,  0, 1)");
+        //        }
+        //        elem.appendTo(blocks[i].elem);
+        //    }
+        //}
+
+        //// Push each plane in Z-axis
+
+        //var clicked = false;
+        //$("#shape").click(function() {
+        //    if (!clicked) { 
+        //        $(".plane").css("-webkit-transform", "matrix3d(1, 0, 0, 0,   0, 1, 0, 0,   0, 0, 1, 0,  0, 0, -50, 1)");
+        //        clicked = true;
+        //    } else {
+        //        $(".plane").css("-webkit-transform", "matrix3d(1, 0, 0, 0,   0, 1, 0, 0,   0, 0, 1, 0,  0, 0, 50, 1)");
+        //        clicked = false;
+        //    }
+        //});
+        
+        var mousedown = false;
+        var x0, y0, x1, y1, dx, dy;
+        $("#stage").mousedown(function(ev) {    
+            mousedown = true;
+            x0 = ev.pageX;
+            y0 = ev.pageY;
+            $("#debug").html("debug: " + x0 + "," + y0);
+        }).mousemove(function(ev) {    
+            if (!mousedown) {
+                return;
+            }
+            x1 = ev.pageX;
+            y1 = ev.pageY;
+            dx = x1 - x0;
+            dy = y1 - y0;
+            var m = $("#shape").css("-webkit-transform");
+            if (m === "none") m = '';
+            var w = (dx / 300) * Math.PI;
+            var v = -(dy / 300) * Math.PI;
+            //m += " matrix3d(" + 
+            //    Math.cos(w) + ",    0," +                -Math.sin(w) +               ",0," +  
+            //    "0," +              Math.cos(v) + "," +  Math.sin(v) +               ",0," + 
+            //    Math.sin(w) + "," + -Math.sin(v) + "," +  Math.cos(w) * Math.cos(v) + ",0," + 
+            //    "0, 0, 0, 1)";
+            m += " matrix3d(" + 
+                Math.cos(w) + "," + "0," +              -Math.sin(w) +                "," + "0," +  
+                "0," +              "1," +               "0," +                             "0," + 
+                Math.sin(w) + "," + "0," +                Math.cos(w) +               "," + "0," + 
+                "0, 0, 0, 1)";
+            m += " matrix3d(" + 
+                "1," +              "0," +               "0," +                             "0," +  
+                "0," +              Math.cos(v) + "," +  Math.sin(v) +                "," + "0," + 
+                "0," +             -Math.sin(v) + "," +  Math.cos(v) +                "," + "0," + 
+                "0, 0, 0, 1)";
+            $("#shape").css("-webkit-transform", m);
+            m = $("#shape").css("-webkit-transform");
+            $("#debug").html("debug: " + x0 + "," + y0 + " " + x1 + "," + y1 + " " + dx + "," + dy);
+            //$("#matrix3d").html(m);
+            
+            x0 = x1;
+            y0 = y1;
+        }).mouseup(function(ev) {
+            mousedown = false;
+        }); 
+
+        //var blockCss = $(".block.yellow").css("-webkit-transform");
+        //$("#debug").html("debug: " + blockCss);
+    });
+
+    function resetShape() {
+        //$("#shape").css("-webkit-transition", "-webkit-transform 2s, opacity 2s");
+        $("#shape").css("-webkit-transform", 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)');
+        //$("#shape").css("-webkit-transition", "");
+    }
+    </script>
+  
+</head>
+<body>
+
+  <div class="controls">
+    <h1>Animations, Transitions and 3D Transforms</h1>
+    <div><button onclick="resetShape()">Reset</button></div>
+    <div><input type="checkbox" id="backfaces" onclick="toggleBackfaces()" checked><label for="backfaces">Backfaces visible</label></div>
+    <div style="position:relative">
+        <p id="debug">xxx</p>
+        <p id="matrix3d"  style="position:relative;top:-10px">yyy</p>
+    </div>
+  </div>
+
+  <div id="container">
+    <div id="stage">
+      <div id="shape" class="cube backfaces">
+        <!--
+        <div class="block yellow">
+            <div class="plane yellow">s</div>
+        </div>
+        <div class="block white">
+            <div class="plane white">s</div>
+        </div>
+        <div class="block blue">
+            <div class="plane blue">s</div>
+        </div>
+        <div class="block green">
+            <div class="plane green">s</div>
+        </div>
+        <div class="block red">
+            <div class="plane red">s</div>
+        </div>
+        <div class="block orange">
+            <div class="plane orange">s</div>
+        </div>
+
+        <div class="block yellow blue">
+            <div class="plane yellow">d</div>
+            <div class="plane blue">d</div>
+        </div>
+        <div class="block yellow green">
+            <div class="plane yellow">d</div>
+            <div class="plane green">d</div>
+        </div>
+        <div class="block yellow red">
+            <div class="plane yellow">d</div>
+            <div class="plane red">d</div>
+        </div>
+        <div class="block yellow orange">
+            <div class="plane yellow">d</div>
+            <div class="plane orange">d</div>
+        </div>
+        -->
+
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
+
