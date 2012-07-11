@@ -40,6 +40,7 @@
                 height: 100px;
                 width: 100px;
                 -webkit-transform-style: preserve-3d;
+                -webkit-transition: -webkit-transform 1s, opacity 2s;
             }
             .block {
                 position: absolute;
@@ -49,7 +50,6 @@
                 border: 1px solid cyan;
 */
                 -webkit-transform-style: preserve-3d;
-                -webkit-transition: -webkit-transform 1s, opacity 2s;
             }
             .plane {
                 position: absolute;
@@ -217,10 +217,10 @@
                 var m;
                 var x, y, z;
                 var i,j;
-                var eFace, eBlock, ePlane;
+                var eBlock, ePlane;
                 var plane;
                 var blocks = [];
-                var xyz = ['x', 'y', 'z'];
+                var faceBlockMatrices = [];
 
                 // Create the face element, which contains 9 blocks at the same side
                 $("<div id='face'/>").appendTo("#shape");
@@ -298,11 +298,11 @@
                         blocks[z2][y2][x2].elem = null;
                     }
                     //matrix += result[0] + 1 + ',' + (result[1] + 1) + ',' + (result[2] + 1) + '<br/>'; 
-                    matrix += x + ',' + y + ',' + z + ' --> ' + result[0]  + ',' + result[1]  + ',' + result[2] + '<br/>'; 
+                    //matrix += x + ',' + y + ',' + z + ' --> ' + result[0]  + ',' + result[1]  + ',' + result[2] + '<br/>'; 
                     //matrix += (x2) + ',' + (y2) + ',' + (z2) + ' --> ' + x3  + ',' + y3  + ',' + z3 + '<br/>'; 
                     //if (x2 == 2 && y2 == 2) {
                     //$("#debug").html("x2,y2,z2: " + x2 + "," + y2 + "," + z2 + " --> " + "x3,y3,z3: " + x3 + "," + y3 + "," + z3);
-                    $("#matrix3d").html(matrix.toString());
+                    //$("#matrix3d").html(matrix.toString());
                     mStr = $(blocks[z3][y3][x3].elem).css("-webkit-transform");
                     $("#debug").html("mStr: " + mStr);
                     if (mStr.search('matrix3d') != 0) { // is 3x2
@@ -313,13 +313,15 @@
                     mStr += (x3 - 1) * 100 + ',' + (y3 - 1) * 100 + ',' + (z3 - 1) * 100 + ',1)';
                     mStr += ' ' + 'matrix3d(' + m.toString() + ')';
                     //$("#matrix3d").html(mStr);
-                    $(blocks[z3][y3][x3].elem).css("-webkit-transform", mStr);
+                    //$(blocks[z3][y3][x3].elem).css("-webkit-transform", mStr);
+                    faceBlockMatrices.push(mStr);
+                    $(blocks[z3][y3][x3].elem).appendTo($('#face'));
                     //}
                 }
     
                 $("#shape").click(function() {
                     //$(".plane").css("-webkit-transform", "matrix3d(1, 0, 0, 0,   0, 1, 0, 0,   0, 0, 1, 0,  0, 0, -50, 1)");
-                    var plane = {xyz: 'x', num: 0};
+                    var plane = {xyz: 'z', num: 1};
                     var x,y,z;
                     var m;
                     switch (plane.xyz) {
@@ -352,6 +354,7 @@
                             }
                         }
                     }
+                    $('#face').css('-webkit-transform', 'matrix3d(' + m.toString() + ')');
                 });
 
                 var mousedown = false;
