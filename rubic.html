@@ -109,47 +109,72 @@
         </style>
         <script src="jquery-1.7.2.js"></script>
         <script type="text/javascript" charset="utf-8">
+            function Matrix(m) {
+                this.n = m.length;
+                this.m = m; 
+            }
+            
+            Matrix.prototype.multiply = function (xyzt) {
+                var result = [];
+                for (var i = 0; i < this.n; i ++) {
+                    result[i] = 0;
+                    for (var j = 0; j < this.n; j ++) {
+                        result[i] += this.m[j][i] * xyzt[j];
+                    }
+                }
+                return result;
+            }
+
+            Matrix.prototype.toString = function () {
+                var i,j;
+                var str = '';
+                for (var i = 0; i < this.n; i ++) {
+                    for (var j = 0; j < this.n; j ++) {
+                        str += this.m[i][j];
+                        if (i != this.n - 1 || j != this.n - 1) {
+                            str += ',';
+                        }
+                    }
+                }
+                return str;
+            }
+
             $(document).ready(function () {
                 var planes = [
                     [
                         [
-                            ['blue', 'yellow', 'orange'],
-                            ['', 'yellow', 'orange'],
-                            ['green', 'yellow', 'orange'], ],
+                            ['blue', 'yellow', 'orange'], ['', 'yellow', 'orange'], ['green', 'yellow', 'orange'] 
+                        ],
                         [
-                            ['blue', '', 'orange'],
-                            ['', '', 'orange'],
-                            ['green', '', 'orange'], ],
+                            ['blue', '', 'orange'], ['', '', 'orange'], ['green', '', 'orange'] 
+                        ],
                         [
-                            ['blue', 'white', 'orange'],
-                            ['', 'white', 'orange'],
-                            ['green', 'white', 'orange'], ], ],
+                            ['blue', 'white', 'orange'], ['', 'white', 'orange'], ['green', 'white', 'orange'] 
+                        ] 
+                    ],
                     [
                         [
-                            ['blue', 'yellow', ''],
-                            ['', 'yellow', ''],
-                            ['green', 'yellow', ''], ],
+                            ['blue', 'yellow', ''], ['', 'yellow', ''], ['green', 'yellow', ''] 
+                        ],
                         [
-                            ['blue', '', ''],
-                            ['', '', ''],
-                            ['green', '', ''], ],
+                            ['blue', '', ''], ['', '', ''], ['green', '', ''] 
+                        ],
                         [
-                            ['blue', 'white', ''],
-                            ['', 'white', ''],
-                            ['green', 'white', ''], ], ],
+                            ['blue', 'white', ''], ['', 'white', ''], ['green', 'white', ''] 
+                        ], 
+                    ],
                     [
                         [
-                            ['blue', 'yellow', 'red'],
-                            ['', 'yellow', 'red'],
-                            ['green', 'yellow', 'red'], ],
+                            ['blue', 'yellow', 'red'], ['', 'yellow', 'red'], ['green', 'yellow', 'red']
+                        ],
                         [
-                            ['blue', '', 'red'],
-                            ['', '', 'red'],
-                            ['green', '', 'red'], ],
+                            ['blue', '', 'red'], ['', '', 'red'], ['green', '', 'red']
+                        ],
                         [
-                            ['blue', 'white', 'red'],
-                            ['', 'white', 'red'],
-                            ['green', 'white', 'red'], ], ], ];
+                            ['blue', 'white', 'red'], ['', 'white', 'red'], ['green', 'white', 'red']
+                        ] 
+                    ]
+                ];
                 var m;
                 var x, y, z;
                 var i;
@@ -161,7 +186,7 @@
                     for (y = 0; y < 3; ++y) {
                         blocks[z][y] = [];
                         for (x = 0; x < 3; ++x) {
-                            //blocks[x] = [];
+                            blocks[z][y][x] = {};
                             eBlock = $("<div class='block'/>");
                             for (i = 0; i < 3; i++) {
                                 plane = planes[z][y][x][i];
@@ -199,34 +224,92 @@
                             m = 'matrix3d(1,0,0,0,  0,1,0,0,  0,0,1,0,  ' + (x - 1) * 100 + ',' + (y - 1) * 100 + ',' + (z - 1) * 100 + ',1)';
                             eBlock.css("-webkit-transform", m);
                             eBlock.appendTo("#shape");
-                            blocks[z][y][x] = eBlock;
+                            blocks[z][y][x] = {elem: eBlock, elemPrev: null};
                         }
                     }
                 }
 
-                //    "matrix3d( 1,  0,  0, 0,    0, -1,  0, 0,    0,  0, -1, 0,      0,  100, -100, 1)", // orange white
 
-                //for (i = 0; i < blocks.length; i ++) {
-                //    blocks[i].elem.css("-webkit-transform", blockMatrices[i]);
-                //}
-                //            elem.css("-webkit-transform", "matrix3d(0, 0, -1, 0,    0,  1, 0, 0,   1,  0,  0, 0,    50,   0,  0, 1)");
-                //        }
-                //        elem.appendTo(blocks[i].elem);
-                //    }
-                //}
-
-                //// Push each plane in Z-axis
-
-                //var clicked = false;
-                //$("#shape").click(function() {
-                //    if (!clicked) { 
-                //        $(".plane").css("-webkit-transform", "matrix3d(1, 0, 0, 0,   0, 1, 0, 0,   0, 0, 1, 0,  0, 0, -50, 1)");
-                //        clicked = true;
-                //    } else {
-                //        $(".plane").css("-webkit-transform", "matrix3d(1, 0, 0, 0,   0, 1, 0, 0,   0, 0, 1, 0,  0, 0, 50, 1)");
-                //        clicked = false;
-                //    }
-                //});
+                var clicked = false;
+                $("#shape").click(function() {
+                    if (!clicked) { 
+                        //$(".plane").css("-webkit-transform", "matrix3d(1, 0, 0, 0,   0, 1, 0, 0,   0, 0, 1, 0,  0, 0, -50, 1)");
+                        var plane = {xyz: 'z', num: 1};
+                        var x,y,z;
+                        var result;
+                        var m, mStr;
+                        var matrix = '';
+                        switch (plane.xyz) {
+                        case 'x':
+                            m  = new Matrix([[1,0,0,0], [0,0,-1,0], [0,1,0,0], [0,0,0,1]]);
+                            break;
+                        case 'y':
+                            m = new Matrix([[0,0,-1,0], [0,1,0,0], [1,0,0,0], [0,0,0,1]]);
+                            break;
+                        case 'z':
+                            m = new Matrix([[0,1,0,0], [-1,0,0,0], [0,0,1,0], [0,0,0,1]]);
+                            break;
+                        }
+                    $("#debug").html(m.toString());
+                        for (z = -1; z < 2; z ++) {
+                            if (plane.xyz === 'z' && plane.num != z) {
+                                continue;
+                            }
+                            for (y = -1; y < 2; y ++) {
+                                if (plane.xyz === 'y' && plane.num != y) {
+                                    continue;
+                                }
+                                if (plane.xyz === 'x') {
+                                    if (plane.num == x) {
+                                        result = m.multiply([z,y,x,1]);
+                                        if (blocks[z+1][y+1][x+1].elemPrev) {
+                                                blocks[z+1][y+1][x+1].elem = blocks[z+1][y+1][x+1].elemPrev; 
+                                                blocks[z+1][y+1][x+1].elemPrev = null;
+                                        }
+                                        blocks[result[0]+1][result[1]+1][result[2]+1].elemPrev = blocks[result[0]+1][result[1]+1][result[2]+1].elem;
+                                        blocks[result[0]+1][result[1]+1][result[2]+1].elem = blocks[z+1][y+1][x+1].elem;
+                                        blocks[z+1][y+1][x+1].elem = null;
+                                $("#matrix3d").html(result[0] + ',' + result[1] + ',' + result[2]);
+                                        $(blocks[result[0]+1][result[1]+1][result[2]+1].elem).css("-webkit-transform", "matrix3d(" + m.toString() + ")");
+                                    }
+                                } else {
+                                    for (x = -1; x < 2; x ++) {
+                                        result = m.multiply([x,y,z,1]);
+                                        //result = [z,y,x,1];
+                                        x2 = x + 1;
+                                        y2 = y + 1;
+                                        z2 = z + 1;
+                                        xx = result[0] + 1;
+                                        yy = result[1] + 1;
+                                        zz = result[2] + 1;
+                                        if (blocks[z2][y2][x2].elemPrev) {
+                                                blocks[z2][y2][x2].elem = blocks[z2][y2][x2].elemPrev; 
+                                                blocks[z2][y2][x2].elemPrev = null;
+                                        }
+                                        blocks[zz][yy][xx].elemPrev = blocks[zz][yy][xx].elem;
+                                        blocks[zz][yy][xx].elem = blocks[z2][y2][x2].elem;
+                                        blocks[z2][y2][x2].elem = null;
+                                        //matrix += result[0] + 1 + ',' + (result[1] + 1) + ',' + (result[2] + 1) + '<br/>'; 
+                                        //matrix += x + ',' + y + ',' + z + ' --> ' + result[0]  + ',' + result[1]  + ',' + result[2] + '<br/>'; 
+                                        matrix += (x2) + ',' + (y2) + ',' + (z2) + ' --> ' + xx  + ',' + yy  + ',' + zz + '<br/>'; 
+                                        if (xx == 0 && yy == 0) {
+                                            mStr = $(blocks[zz][yy][xx].elem).css("-webkit-transform");
+                                            mStr += ' ' + 'matrix3d(' + m.toString() + ')';
+                                            $("#matrix3d").html(mStr);
+                                            $(blocks[zz][yy][xx].elem).css("-webkit-transform", mStr);
+                                        }
+                                        //$(blocks[zz][yy][xx].elem).css("-webkit-transform", "matrix3d(0,1,0,0,-1,0,0,0, 0,0,1,0, 0,0,0,1)");
+                                    }
+                                }
+                            }
+                        }
+                             //   $("#matrix3d").html(matrix);
+                        clicked = true;
+                    } else {
+                        //$(".plane").css("-webkit-transform", "matrix3d(1, 0, 0, 0,   0, 1, 0, 0,   0, 0, 1, 0,  0, 0, 50, 1)");
+                        clicked = false;
+                    }
+                });
 
                 var mousedown = false;
                 var x0, y0, x1, y1, dx, dy;
@@ -289,48 +372,13 @@
             </div>
             <div style="position:relative">
                 <p id="debug">xxx</p>
-                <p id="matrix3d" style="position:relative;top:-10px">yyy</p>
+                <p id="matrix3d" style="position:relative;top:-10px">matrix3d</p>
             </div>
         </div>
         <div id="container">
             <div id="stage">
                 <div id="shape" class="cube backfaces">
-                    <!-- <div class="block yellow">
-            <div class="plane yellow">s</div>
-        </div>
-        <div class="block white">
-            <div class="plane white">s</div>
-        </div>
-        <div class="block blue">
-            <div class="plane blue">s</div>
-        </div>
-        <div class="block green">
-            <div class="plane green">s</div>
-        </div>
-        <div class="block red">
-            <div class="plane red">s</div>
-        </div>
-        <div class="block orange">
-            <div class="plane orange">s</div>
-        </div>
-
-        <div class="block yellow blue">
-            <div class="plane yellow">d</div>
-            <div class="plane blue">d</div>
-        </div>
-        <div class="block yellow green">
-            <div class="plane yellow">d</div>
-            <div class="plane green">d</div>
-        </div>
-        <div class="block yellow red">
-            <div class="plane yellow">d</div>
-            <div class="plane red">d</div>
-        </div>
-        <div class="block yellow orange">
-            <div class="plane yellow">d</div>
-            <div class="plane orange">d</div>
-        </div>
-        --></div>
+                </div>
             </div>
         </div>
     </body>
