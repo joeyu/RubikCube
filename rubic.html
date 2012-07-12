@@ -153,12 +153,42 @@
                 }
             }
             
-            Matrix.prototype.multiply = function (xyzt) {
-                var result = [];
-                for (var i = 0; i < this.n; i ++) {
-                    result[i] = 0;
-                    for (var j = 0; j < this.n; j ++) {
-                        result[i] += this.m[j][i] * xyzt[j];
+            Matrix.prototype.multiply = function (m) {
+                var result;
+                var mat;
+                if (m instanceof Matrix) {
+                    mat = [];
+                    for (var k = 0; k < this.n; k ++) {
+                        mat[k] = [];
+                        for (var i = 0; i < this.n; i ++) {
+                            mat[k][i] = 0;
+                            for (var j = 0; j < this.n; j ++) {
+                                mat[k][i] += this.m[j][i] * m.m[k][j];
+                            }
+                        }
+                    }
+                    $("#matrix3d").html(mat.toString());
+                    result = new Matrix(mat);
+                } else if (m instanceof Array && m[0] instanceof Array) {
+                    mat = [];
+                    for (var k = 0; k < this.n; k ++) {
+                        mat[k] = [];
+                        for (var i = 0; i < this.n; i ++) {
+                            mat[k][i] = 0;
+                            for (var j = 0; j < this.n; j ++) {
+                                mat[k][i] += this.m[j][i] * m[k][j];
+                            }
+                        }
+                    }
+                    result = new Matrix(mat);
+                } else {
+                    var xyzt = m;
+                    result = [];
+                    for (var i = 0; i < this.n; i ++) {
+                        result[i] = 0;
+                        for (var j = 0; j < this.n; j ++) {
+                            result[i] += this.m[j][i] * xyzt[j];
+                        }
                     }
                 }
                 return result;
@@ -220,7 +250,8 @@
                 var eBlock, ePlane;
                 var plane;
                 var blocks = [];
-                var faceBlockMatrices = [];
+                var faceBlocks = [];
+                var timers = [];
 
                 // Create the face element, which contains 9 blocks at the same side
                 $("<div id='face'/>").appendTo("#shape");
@@ -286,16 +317,15 @@
                     x3 = result[0] + 1;
                     y3 = result[1] + 1;
                     z3 = result[2] + 1;
-                    if (x2 == x3 && y2 == y3 && z2 == z3) {
-                        return;
-                    }
-                    blocks[z3][y3][x3].elemPrev = blocks[z3][y3][x3].elem; // save the current one
-                    if (blocks[z2][y2][x2].elemPrev) {
-                        blocks[z3][y3][x3].elem = blocks[z2][y2][x2].elemPrev; // assign the new one
-                        blocks[z2][y2][x2].elemPrev = null;
-                    } else {
-                        blocks[z3][y3][x3].elem = blocks[z2][y2][x2].elem; // assign the new one
-                        blocks[z2][y2][x2].elem = null;
+                    if (!(x2 == x3 && y2 == y3 && z2 == z3)) {
+                        blocks[z3][y3][x3].elemPrev = blocks[z3][y3][x3].elem; // save the current one
+                        if (blocks[z2][y2][x2].elemPrev) {
+                            blocks[z3][y3][x3].elem = blocks[z2][y2][x2].elemPrev; // assign the new one
+                            blocks[z2][y2][x2].elemPrev = null;
+                        } else {
+                            blocks[z3][y3][x3].elem = blocks[z2][y2][x2].elem; // assign the new one
+                            blocks[z2][y2][x2].elem = null;
+                        }
                     }
                     //matrix += result[0] + 1 + ',' + (result[1] + 1) + ',' + (result[2] + 1) + '<br/>'; 
                     //matrix += x + ',' + y + ',' + z + ' --> ' + result[0]  + ',' + result[1]  + ',' + result[2] + '<br/>'; 
@@ -304,8 +334,8 @@
                     //$("#debug").html("x2,y2,z2: " + x2 + "," + y2 + "," + z2 + " --> " + "x3,y3,z3: " + x3 + "," + y3 + "," + z3);
                     //$("#matrix3d").html(matrix.toString());
                     mStr = $(blocks[z3][y3][x3].elem).css("-webkit-transform");
-                    $("#debug").html("mStr: " + mStr);
-                    if (mStr.search('matrix3d') != 0) { // is 3x2
+                    //$("#debug").html("mStr: " + mStr);
+                    if (mStr.search('matrix3d') != 0) { // is 3x2 matrix
                         mStr = mStr.replace(/^matrix\((.*)\)$/, '$1');
                         mStr = 'matrix3d(' + (new Matrix(mStr)).toString() + ')';
                     }
@@ -314,14 +344,14 @@
                     mStr += ' ' + 'matrix3d(' + m.toString() + ')';
                     //$("#matrix3d").html(mStr);
                     //$(blocks[z3][y3][x3].elem).css("-webkit-transform", mStr);
-                    faceBlockMatrices.push(mStr);
+                    faceBlocks.push({elem: blocks[z3][y3][x3].elem, m: mStr});
                     $(blocks[z3][y3][x3].elem).appendTo($('#face'));
                     //}
                 }
     
                 $("#shape").click(function() {
                     //$(".plane").css("-webkit-transform", "matrix3d(1, 0, 0, 0,   0, 1, 0, 0,   0, 0, 1, 0,  0, 0, -50, 1)");
-                    var plane = {xyz: 'z', num: 1};
+                    var plane = {xyz: 'z', num: 0};
                     var x,y,z;
                     var m;
                     switch (plane.xyz) {
@@ -355,19 +385,50 @@
                         }
                     }
                     $('#face').css('-webkit-transform', 'matrix3d(' + m.toString() + ')');
+                    setTimeout(function() {
+                        var block;
+                        while (block = faceBlocks.pop()) {
+                            $(block.elem).appendTo($('#shape'));
+                            $(block.elem).css("-webkit-transform", block.m);
+                        }
+                    $('#face').css('-webkit-transform', 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)');
+                    }, 1000);
                 });
 
                 var mousedown = false;
                 var x0, y0, x1, y1, dx, dy;
+                var mX, mY, mXY;
+                var start, end;
+                var cos
                 $("#stage").mousedown(function (ev) {
                     mousedown = true;
                     x0 = ev.pageX;
                     y0 = ev.pageY;
                     $("#debug").html("debug: " + x0 + "," + y0);
+
+                    // Clear timers
+                    //var t;
+                    //while (t = timers.pop()) {
+                    //    clearTimeout(t);
+                    //}
                 }).mousemove(function (ev) {
                     if (!mousedown) {
                         return;
                     }
+                    
+                    //var m = $("#shape").css("-webkit-transform");
+                    //if (m === "none") {
+                    //    m = 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)';
+                    //}
+                    //if (m.search('matrix3d') != 0) { // is 3x2 matrix
+                    //    m = m.replace(/^matrix\((.*)\)$/, '$1');
+                    //    m = new Matrix(m);
+                    //} else {
+                    //    m = m.replace(/^matrix3d\((.*)\)$/, '$1');
+                    //    m = new Matrix(m);
+                    //}
+
+
                     x1 = ev.pageX;
                     y1 = ev.pageY;
                     dx = x1 - x0;
@@ -378,12 +439,14 @@
                     }
                     var w = (dx / 300) * Math.PI;
                     var v = -(dy / 300) * Math.PI;
-                    m += " matrix3d(" + Math.cos(w) + "," + "0," + -Math.sin(w) + "," + "0," + "0," + "1," + "0," + "0," + Math.sin(w) + "," + "0," + Math.cos(w) + "," + "0," + "0, 0, 0, 1)";
-                    m += " matrix3d(" + "1," + "0," + "0," + "0," + "0," + Math.cos(v) + "," + Math.sin(v) + "," + "0," + "0," + -Math.sin(v) + "," + Math.cos(v) + "," + "0," + "0, 0, 0, 1)";
+                    mY = new Matrix([[Math.cos(w),0,-Math.sin(w), 0], [0,1,0,0,], [Math.sin(w),0,Math.cos(w),0], [0, 0, 0, 1]]);
+                    mX = new Matrix([[1,0,0,0], [0,Math.cos(v),Math.sin(v),0], [0,-Math.sin(v),Math.cos(v),0], [0, 0, 0, 1]]);
+                    mXY = mX.multiply(mY);
+                    //$("#matrix3d").html(mXY.toString());
+                    m += "matrix3d(" + mXY.toString() + ")";
                     $("#shape").css("-webkit-transform", m);
                     m = $("#shape").css("-webkit-transform");
                     $("#debug").html("debug: " + x0 + "," + y0 + " " + x1 + "," + y1 + " " + dx + "," + dy);
-                    //$("#matrix3d").html(m);
 
                     x0 = x1;
                     y0 = y1;
@@ -396,9 +459,10 @@
             });
 
             function resetShape() {
-                //$("#shape").css("-webkit-transition", "-webkit-transform 2s, opacity 2s");
+                $("#shape").css("-webkit-transition", "-webkit-transform 2s, opacity 2s");
                 $("#shape").css("-webkit-transform", 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)');
-                //$("#shape").css("-webkit-transition", "");
+                //$("#shape").delay(2000).css("-webkit-transition", "");
+                setTimeout(function() {$("#shape").css("-webkit-transition", "");}, 2000);
             }
         </script>
     </head>
