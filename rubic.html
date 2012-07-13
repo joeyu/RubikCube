@@ -134,7 +134,7 @@
                         this.n = Math.sqrt(mm.length);
                         for (i = 0; i < this.n; i ++) {
                             this.m[i] = [];
-                            for (j = 0; i < this.n; j ++) {
+                            for (j = 0; j < this.n; j ++) {
                                 this.m[i][j] = parseFloat(mm[i * this.n + j]);
                             }
                         }
@@ -167,7 +167,7 @@
                             }
                         }
                     }
-                    $("#matrix3d").html(mat.toString());
+                    //$("#matrix3d").html(mat.toString());
                     result = new Matrix(mat);
                 } else if (m instanceof Array && m[0] instanceof Array) {
                     mat = [];
@@ -396,15 +396,15 @@
                 });
 
                 var mousedown = false;
-                var x0, y0, x1, y1, dx, dy;
+                var x0, y0, x1, y1;
                 var mX, mY, mXY;
                 var start, end;
-                var cos
+                var theta = 0, phi = 0;
                 $("#stage").mousedown(function (ev) {
                     mousedown = true;
                     x0 = ev.pageX;
                     y0 = ev.pageY;
-                    $("#debug").html("debug: " + x0 + "," + y0);
+                    //$("#debug").html("debug: " + x0 + "," + y0);
 
                     // Clear timers
                     //var t;
@@ -416,37 +416,58 @@
                         return;
                     }
                     
-                    //var m = $("#shape").css("-webkit-transform");
-                    //if (m === "none") {
-                    //    m = 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)';
-                    //}
-                    //if (m.search('matrix3d') != 0) { // is 3x2 matrix
-                    //    m = m.replace(/^matrix\((.*)\)$/, '$1');
-                    //    m = new Matrix(m);
-                    //} else {
-                    //    m = m.replace(/^matrix3d\((.*)\)$/, '$1');
-                    //    m = new Matrix(m);
-                    //}
+                    var m = $("#shape").css("-webkit-transform");
+                    var mm;
+                    if (m === "none") {
+                        m = 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)';
+                    }
+                    if (m.search('matrix3d') != 0) { // is 3x2 matrix
+                        mm = m.replace(/^matrix\((.*)\)$/, '$1');
+                        mm = new Matrix(mm);
+                        m = 'matrix3d(' + mm.toString() + ')';
+                    } else {
+                        mm = m.replace(/^matrix3d\((.*)\)$/, '$1');
+                        mm = new Matrix(mm);
+                    }
 
+                    //sinTheta = -mm.m[0][2];
+                    //cosTheta = Math.sqrt(1 - sinTheta * sinTheta);
+                    //sinPhi = mm.m[1][2] / cosTheta;
+                    //cosPhi = Math.sqrt(1 - sinPhi * sinPhi);
+                    //sinPsi = mm.m[2][2] / cosTheta;
+                    //cosPsi = Math.sqrt(1 - sinPsi * sinPsi);
+                    //mm.m[0][1] = -mm.m[0][1];
+                    //mm.m[0][2] = -mm.m[0][2];
+                    //mm.m[1][0] = cosPhi * sinPsi + sinPhi * sinTheta * cosPsi;
+                    //mm.m[1][1] = cosPhi * cosPsi - sinPhi * sinTheta * sinPsi;
+                    //mm.m[1][2] = -mm.m[1][2];
+                    //mm.m[2][0] = sinPhi * sinPsi - cosPhi * sinTheta * cosPsi;
+                    //mm.m[2][1] = sinPhi * cosPsi - cosPhi * sinTheta * sinPsi;
+                    //x1 = ev.pageX;
+                    //y1 = ev.pageY;
+                    //end = m.multiply([x1, y1, 800, 1]);
+                    //start = m.multiply([x0, y0, 800, 1]);
+                    ////phi =  - (end[1] - start[1]) * Math.PI / 400;
+                    ////theta =  (end[0] - start[0]) * Math.PI / 400;
+                    ////psi =  - (end[2] - start[2]) * Math.PI / 400;
+                    //phi =  - (end[1] - start[1]) * Math.PI / 400;
+                    //theta =  (end[0] - start[0]) * Math.PI / 400;
+                    //psi =  - (end[2] - start[2]) * Math.PI / 400;
+                    
 
                     x1 = ev.pageX;
                     y1 = ev.pageY;
-                    dx = x1 - x0;
-                    dy = y1 - y0;
-                    var m = $("#shape").css("-webkit-transform");
-                    if (m === "none") {
-                        m = '';
-                    }
-                    var w = (dx / 300) * Math.PI;
-                    var v = -(dy / 300) * Math.PI;
-                    mY = new Matrix([[Math.cos(w),0,-Math.sin(w), 0], [0,1,0,0,], [Math.sin(w),0,Math.cos(w),0], [0, 0, 0, 1]]);
-                    mX = new Matrix([[1,0,0,0], [0,Math.cos(v),Math.sin(v),0], [0,-Math.sin(v),Math.cos(v),0], [0, 0, 0, 1]]);
+                    theta += ((x1 - x0) / 400) * Math.PI;
+                    phi   += ((y0 - y1) / 400) * Math.PI;
+                    mX = new Matrix([[1,0,0,0], [0,Math.cos(phi),Math.sin(phi),0], [0,-Math.sin(phi),Math.cos(phi),0], [0, 0, 0, 1]]);
+                    mY = new Matrix([[Math.cos(theta),0,-Math.sin(theta), 0], [0,1,0,0,], [Math.sin(theta),0,Math.cos(theta),0], [0, 0, 0, 1]]);
                     mXY = mX.multiply(mY);
-                    //$("#matrix3d").html(mXY.toString());
-                    m += "matrix3d(" + mXY.toString() + ")";
+                    $("#debug").html("debug: " + x0 + "," + y0 + " " + x1 + "," + y1);
+                    $("#debug2").html('theta,phi: ' + theta + ',' + phi);
+                    $("#matrix3d").html("mXY: " + mXY.toString());
+                    m = " " + "matrix3d(" + mXY.toString() + ")";
                     $("#shape").css("-webkit-transform", m);
                     m = $("#shape").css("-webkit-transform");
-                    $("#debug").html("debug: " + x0 + "," + y0 + " " + x1 + "," + y1 + " " + dx + "," + dy);
 
                     x0 = x1;
                     y0 = y1;
@@ -479,6 +500,7 @@
             </div>
             <div style="position:relative">
                 <p id="debug">xxx</p>
+                <p id="debug2">xxx</p>
                 <p id="matrix3d" style="position:relative;top:-10px">matrix3d</p>
             </div>
         </div>
