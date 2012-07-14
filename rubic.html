@@ -26,7 +26,7 @@
                 -webkit-transition: -webkit-transform 2s;
                 -webkit-transform-style: preserve-3d;
             }
-            #shape {
+            #cube {
                 position: relative;
                 top: 200px;
                 margin: 0 auto;
@@ -67,10 +67,10 @@
                 -webkit-transition: -webkit-transform 2s, opacity 2s;
                 -webkit-backface-visibility: hidden;
             }
-            #shape.backfaces .plane {
+            #cube.backfaces .plane {
                 -webkit-backface-visibility: visible;
             }
-            #shape {
+            #cube {
                 /*
         -webkit-animation: spin 32s infinite linear;
         -webkit-transform: rotateY(-30deg);
@@ -167,7 +167,7 @@
                             }
                         }
                     }
-                    //$("#matrix3d").html(mat.toString());
+                    //$("#debug3").html(mat.toString());
                     result = new Matrix(mat);
                 } else if (m instanceof Array && m[0] instanceof Array) {
                     mat = [];
@@ -254,7 +254,7 @@
                 var timers = [];
 
                 // Create the face element, which contains 9 blocks at the same side
-                $("<div id='face'/>").appendTo("#shape");
+                $("<div id='face'/>").appendTo("#cube");
 
                 for (z = 0; z < 3; ++z) {
                     blocks[z] = [];
@@ -298,7 +298,7 @@
                             }
                             m = 'matrix3d(1,0,0,0,  0,1,0,0,  0,0,1,0,  ' + (x - 1) * 100 + ',' + (y - 1) * 100 + ',' + (z - 1) * 100 + ',1)';
                             eBlock.css("-webkit-transform", m);
-                            eBlock.appendTo("#shape");
+                            eBlock.appendTo("#cube");
                             blocks[z][y][x] = {elem: eBlock, elemPrev: null};
                         }
                     }
@@ -332,7 +332,7 @@
                     //matrix += (x2) + ',' + (y2) + ',' + (z2) + ' --> ' + x3  + ',' + y3  + ',' + z3 + '<br/>'; 
                     //if (x2 == 2 && y2 == 2) {
                     //$("#debug").html("x2,y2,z2: " + x2 + "," + y2 + "," + z2 + " --> " + "x3,y3,z3: " + x3 + "," + y3 + "," + z3);
-                    //$("#matrix3d").html(matrix.toString());
+                    //$("#debug3").html(matrix.toString());
                     mStr = $(blocks[z3][y3][x3].elem).css("-webkit-transform");
                     //$("#debug").html("mStr: " + mStr);
                     if (mStr.search('matrix3d') != 0) { // is 3x2 matrix
@@ -342,14 +342,14 @@
                     mStr  = mStr.replace(/(,[^,]+){4}$/, ',');
                     mStr += (x3 - 1) * 100 + ',' + (y3 - 1) * 100 + ',' + (z3 - 1) * 100 + ',1)';
                     mStr += ' ' + 'matrix3d(' + m.toString() + ')';
-                    //$("#matrix3d").html(mStr);
+                    //$("#debug3").html(mStr);
                     //$(blocks[z3][y3][x3].elem).css("-webkit-transform", mStr);
                     faceBlocks.push({elem: blocks[z3][y3][x3].elem, m: mStr});
                     $(blocks[z3][y3][x3].elem).appendTo($('#face'));
                     //}
                 }
     
-                $("#shape").click(function() {
+                $("#cube").click(function() {
                     //$(".plane").css("-webkit-transform", "matrix3d(1, 0, 0, 0,   0, 1, 0, 0,   0, 0, 1, 0,  0, 0, -50, 1)");
                     var plane = {xyz: 'z', num: 0};
                     var x,y,z;
@@ -388,11 +388,19 @@
                     setTimeout(function() {
                         var block;
                         while (block = faceBlocks.pop()) {
-                            $(block.elem).appendTo($('#shape'));
+                            $(block.elem).appendTo($('#cube'));
                             $(block.elem).css("-webkit-transform", block.m);
                         }
                     $('#face').css('-webkit-transform', 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)');
                     }, 1000);
+                });
+
+                var eCount = 0;
+                var blockMousedown = false;
+                $(".block").mousedown(function (ev) {
+                    $('#debug').html('eCount: ' + eCount);
+                    eCount ++;
+                    blockMousedown = true;
                 });
 
                 var mousedown = false;
@@ -401,6 +409,9 @@
                 var start, end;
                 var theta = 0, phi = 0;
                 $("#stage").mousedown(function (ev) {
+                    $('#debug2').html('eCount: ' + eCount);
+                    eCount ++;
+
                     mousedown = true;
                     x0 = ev.pageX;
                     y0 = ev.pageY;
@@ -416,20 +427,18 @@
                         return;
                     }
                     
-                    var m = $("#shape").css("-webkit-transform");
-                    var mm;
-                    if (m === "none") {
-                        m = 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)';
-                    }
-                    if (m.search('matrix3d') != 0) { // is 3x2 matrix
-                        mm = m.replace(/^matrix\((.*)\)$/, '$1');
-                        mm = new Matrix(mm);
-                        m = 'matrix3d(' + mm.toString() + ')';
-                    } else {
-                        mm = m.replace(/^matrix3d\((.*)\)$/, '$1');
-                        mm = new Matrix(mm);
-                    }
-
+                    //var mm;
+                    //if (m === "none") {
+                    //    m = 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)';
+                    //}
+                    //if (m.search('matrix3d') != 0) { // is 3x2 matrix
+                    //    mm = m.replace(/^matrix\((.*)\)$/, '$1');
+                    //    mm = new Matrix(mm);
+                    //    m = 'matrix3d(' + mm.toString() + ')';
+                    //} else {
+                    //    mm = m.replace(/^matrix3d\((.*)\)$/, '$1');
+                    //    mm = new Matrix(mm);
+                    //}
                     //sinTheta = -mm.m[0][2];
                     //cosTheta = Math.sqrt(1 - sinTheta * sinTheta);
                     //sinPhi = mm.m[1][2] / cosTheta;
@@ -454,25 +463,29 @@
                     //theta =  (end[0] - start[0]) * Math.PI / 400;
                     //psi =  - (end[2] - start[2]) * Math.PI / 400;
                     
+                    if (blockMousedown) {
+                        $("#debug3").html("blockMouse: " + mXY.toString());
+                    } else { // rotate the cube
+                        x1 = ev.pageX;
+                        y1 = ev.pageY;
+                        theta += ((x1 - x0) / 400) * Math.PI;
+                        phi   += ((y0 - y1) / 400) * Math.PI;
+                        mX = new Matrix([[1,0,0,0], [0,Math.cos(phi),Math.sin(phi),0], [0,-Math.sin(phi),Math.cos(phi),0], [0, 0, 0, 1]]);
+                        mY = new Matrix([[Math.cos(theta),0,-Math.sin(theta), 0], [0,1,0,0,], [Math.sin(theta),0,Math.cos(theta),0], [0, 0, 0, 1]]);
+                        mXY = mX.multiply(mY);
+                        m = "matrix3d(" + mXY.toString() + ")";
+                        $("#cube").css("-webkit-transform", m);
+                        m = $("#cube").css("-webkit-transform");
+                        x0 = x1;
+                        y0 = y1;
+                    }
 
-                    x1 = ev.pageX;
-                    y1 = ev.pageY;
-                    theta += ((x1 - x0) / 400) * Math.PI;
-                    phi   += ((y0 - y1) / 400) * Math.PI;
-                    mX = new Matrix([[1,0,0,0], [0,Math.cos(phi),Math.sin(phi),0], [0,-Math.sin(phi),Math.cos(phi),0], [0, 0, 0, 1]]);
-                    mY = new Matrix([[Math.cos(theta),0,-Math.sin(theta), 0], [0,1,0,0,], [Math.sin(theta),0,Math.cos(theta),0], [0, 0, 0, 1]]);
-                    mXY = mX.multiply(mY);
-                    $("#debug").html("debug: " + x0 + "," + y0 + " " + x1 + "," + y1);
-                    $("#debug2").html('theta,phi: ' + theta + ',' + phi);
-                    $("#matrix3d").html("mXY: " + mXY.toString());
-                    m = " " + "matrix3d(" + mXY.toString() + ")";
-                    $("#shape").css("-webkit-transform", m);
-                    m = $("#shape").css("-webkit-transform");
-
-                    x0 = x1;
-                    y0 = y1;
+                    //$("#debug").html("x0,y0,x1,y1: " + x0 + "," + y0 + " " + x1 + "," + y1);
+                    //$("#debug2").html('theta,phi: ' + theta + ',' + phi);
+                    //$("#debug3").html("mXY: " + mXY.toString());
                 }).mouseup(function (ev) {
                     mousedown = false;
+                    blockMousedown = false;
                 });
 
                 //var blockCss = $(".block.yellow").css("-webkit-transform");
@@ -480,10 +493,10 @@
             });
 
             function resetShape() {
-                $("#shape").css("-webkit-transition", "-webkit-transform 2s, opacity 2s");
-                $("#shape").css("-webkit-transform", 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)');
-                //$("#shape").delay(2000).css("-webkit-transition", "");
-                setTimeout(function() {$("#shape").css("-webkit-transition", "");}, 2000);
+                $("#cube").css("-webkit-transition", "-webkit-transform 2s, opacity 2s");
+                $("#cube").css("-webkit-transform", 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)');
+                //$("#cube").delay(2000).css("-webkit-transition", "");
+                setTimeout(function() {$("#cube").css("-webkit-transition", "");}, 2000);
             }
         </script>
     </head>
@@ -499,14 +512,14 @@
                 <label for="backfaces">Backfaces visible</label>
             </div>
             <div style="position:relative">
-                <p id="debug">xxx</p>
-                <p id="debug2">xxx</p>
-                <p id="matrix3d" style="position:relative;top:-10px">matrix3d</p>
+                <p id="debug">debug</p>
+                <p id="debug2">debug2</p>
+                <p id="debug3">debug3</p>
             </div>
         </div>
         <div id="container">
             <div id="stage">
-                <div id="shape" class="cube backfaces">
+                <div id="cube" class="cube backfaces">
                 </div>
             </div>
         </div>
