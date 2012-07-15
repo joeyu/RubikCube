@@ -51,25 +51,27 @@ Matrix.prototype.multiply = function (m) {
         }
         //$("#debug3").html(mat.toString());
         result = new Matrix(mat);
-    } else if (m instanceof Array && m[0] instanceof Array) {
-        mat = [];
-        for (var k = 0; k < this.n; k ++) {
-            mat[k] = [];
-            for (var i = 0; i < this.n; i ++) {
-                mat[k][i] = 0;
-                for (var j = 0; j < this.n; j ++) {
-                    mat[k][i] += this.m[j][i] * m[k][j];
+    } else if (m instanceof Array) {
+        if (m[0] instanceof Array) { //2D
+            mat = [];
+            for (var k = 0; k < this.n; k ++) {
+                mat[k] = [];
+                for (var i = 0; i < this.n; i ++) {
+                    mat[k][i] = 0;
+                    for (var j = 0; j < this.n; j ++) {
+                        mat[k][i] += this.m[j][i] * m[k][j];
+                    }
                 }
             }
-        }
-        result = new Matrix(mat);
-    } else {
-        var xyzt = m;
-        result = [];
-        for (var i = 0; i < this.n; i ++) {
-            result[i] = 0;
-            for (var j = 0; j < this.n; j ++) {
-                result[i] += this.m[j][i] * xyzt[j];
+            result = new Matrix(mat);
+        } else { // 1D
+            var xyzt = m;
+            result = [];
+            for (var i = 0; i < this.n; i ++) {
+                result[i] = 0;
+                for (var j = 0; j < this.n; j ++) {
+                    result[i] += this.m[j][i] * xyzt[j];
+                }
             }
         }
     }
@@ -172,7 +174,7 @@ $(document).ready(function () {
                         m = 'matrix3d(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,50,1)';
                         break;
                     case 'orange':
-                        m = 'matrix3d(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,-50,1)';
+                        m = 'matrix3d(-1,0,0,0,  0,1,0,0,  0,0,-1,0,  0,0,-50,1)';
                         break;
                     default:
                         break;
@@ -184,7 +186,7 @@ $(document).ready(function () {
                 m = 'matrix3d(1,0,0,0,  0,1,0,0,  0,0,1,0,  ' + (x - 1) * 100 + ',' + (y - 1) * 100 + ',' + (z - 1) * 100 + ',1)';
                 eBlock.css("-webkit-transform", m);
                 eBlock.appendTo("#cube");
-                blocks[z][y][x] = {elem: eBlock, elemPrev: null};
+                blocks[z][y][x] = {elem: eBlock, elemSaved: null};
             }
         }
     }
@@ -192,62 +194,55 @@ $(document).ready(function () {
    function rotateBlock(blocks, m, x, y, z) {
         var result;
         var x2,y2,z2,x3,y3,z3;
-        var mStr;
+        var m2;
         var matrix = '';
 
-        result = m.multiply([x,y,z,1]);
-        x2 = x + 1;
-        y2 = y + 1;
-        z2 = z + 1;
-        x3 = result[0] + 1;
-        y3 = result[1] + 1;
-        z3 = result[2] + 1;
-        if (!(x2 == x3 && y2 == y3 && z2 == z3)) {
-            blocks[z3][y3][x3].elemPrev = blocks[z3][y3][x3].elem; // save the current one
-            if (blocks[z2][y2][x2].elemPrev) {
-                blocks[z3][y3][x3].elem = blocks[z2][y2][x2].elemPrev; // assign the new one
-                blocks[z2][y2][x2].elemPrev = null;
+        result = m.multiply([x - 1, y - 1, z - 1, 1]);
+        x2 = result[0] + 1;
+        y2 = result[1] + 1;
+        z2 = result[2] + 1;
+        if (!(x == x2 && y == y2 && z == z2)) {
+            blocks[z2][y2][x2].elemSaved = blocks[z2][y2][x2].elem; // save the current one
+            if (blocks[z][y][x].elemSaved) {
+                blocks[z2][y2][x2].elem = blocks[z][y][x].elemSaved; // assign the new one
+                blocks[z][y][x].elemSaved = null;
             } else {
-                blocks[z3][y3][x3].elem = blocks[z2][y2][x2].elem; // assign the new one
-                blocks[z2][y2][x2].elem = null;
+                blocks[z2][y2][x2].elem = blocks[z][y][x].elem; // assign the new one
+                blocks[z][y][x].elem = null;
             }
         }
 
-        mStr = $(blocks[z3][y3][x3].elem).css("-webkit-transform");
-        if (mStr.search('matrix3d') != 0) { // is 3x2 matrix
-            mStr = mStr.replace(/^matrix\((.*)\)$/, '$1');
-            mStr = 'matrix3d(' + (new Matrix(mStr)).toString() + ')';
-        }
-        mStr  = mStr.replace(/(,[^,]+){4}$/, ',');
-        mStr += (x3 - 1) * 100 + ',' + (y3 - 1) * 100 + ',' + (z3 - 1) * 100 + ',1)';
-        mStr += ' ' + 'matrix3d(' + m.toString() + ')';
-        $(blocks[z3][y3][x3].elem).appendTo($('#face'));
-        return {elem: blocks[z3][y3][x3].elem, m: mStr};
+        m2 = getTransformMatrix(blocks[z2][y2][x2].elem);
+        m2 = 'matrix3d(' + m2.toString() + ')';
+        m2  = m2.replace(/(,[^,]+){4}$/, ',');
+        m2 += (x2 - 1) * 100 + ',' + (y2 - 1) * 100 + ',' + (z2 - 1) * 100 + ',1)';
+        m2 += ' ' + 'matrix3d(' + m.toString() + ')';
+        $(blocks[z2][y2][x2].elem).appendTo($('#face'));
+        return {elem: blocks[z2][y2][x2].elem, m: m2};
     }
 
-    function rotateFace(xyz, num, cw) {
+    function rotateFace(xyz, num, cw) { // cw == 1 -- clockwise; cw == -1 -- counter-clockwise
         var x,y,z;
         var m;
         var faceBlocks = [];
 
-        -- num;
         switch (xyz) {
         case 'x':
-            m  = new Matrix([[1,0,0,0], [0,0,1,0], [0,-1,0,0], [0,0,0,1]]);
+            m  = new Matrix([[1,0,0,0], [0,0,cw,0], [0,-cw,0,0], [0,0,0,1]]);
             break;
         case 'y':
-            m = new Matrix([[0,0,1,0], [0,1,0,0], [-1,0,0,0], [0,0,0,1]]);
+            m = new Matrix([[0,0,-cw,0], [0,1,0,0], [cw,0,0,0], [0,0,0,1]]);
             break;
         case 'z':
-            m = new Matrix([[0,1,0,0], [-1,0,0,0], [0,0,1,0], [0,0,0,1]]);
+            m = new Matrix([[0,cw,0,0], [-cw,0,0,0], [0,0,1,0], [0,0,0,1]]);
             break;
         }
 
-        for (z = -1; z < 2; z ++) {
+        for (z = 0; z < 3; z ++) {
             if (xyz === 'z' && num != z) {
                 continue;
             }
-            for (y = -1; y < 2; y ++) {
+            for (y = 0; y < 3; y ++) {
                 if (xyz === 'y' && num != y) {
                     continue;
                 }
@@ -255,7 +250,7 @@ $(document).ready(function () {
                     x = num;
                     faceBlocks.push(rotateBlock(blocks, m, x, y, z));
                 } else {
-                    for (x = -1; x < 2; x ++) {
+                    for (x = 0; x < 3; x ++) {
                         faceBlocks.push(rotateBlock(blocks, m, x, y, z));
                     }
                 }
@@ -269,8 +264,8 @@ $(document).ready(function () {
                 $(block.elem).css("-webkit-transform", block.m);
             }
             $('#face').css('-webkit-transform', 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)');
-        }, 1000);
-    };
+        }, 500);
+    }
 
     function blockPos(blocks, blockElem) {
         var z,y,x;
@@ -286,6 +281,26 @@ $(document).ready(function () {
         return null;
     }
     
+    function getTransformMatrix(elem) {
+        var m;
+
+        if (typeof elem == 'string') {
+            m = elem;
+        } else {
+            m = elem.css("-webkit-transform");
+        }
+        if (m.search('matrix3d') != 0) { // is 3x2 matrix
+            m = m.replace(/^matrix\((.*)\)$/, '$1');
+            m = new Matrix(m);
+        } else {
+            m = m.replace(/^matrix3d\((.*)\)$/, '$1');
+            m = new Matrix(m);
+        }
+
+        return m;
+    }
+
+    
     var eCount = 0;
     var eClasses = [];
     var blockTrack = [];
@@ -293,52 +308,71 @@ $(document).ready(function () {
     $(".plane").mousedown(function (ev) {
         ev.stopPropagation();
 
-        eCount ++;
-        $('#debug').html('[mousedown] eCount: ' + eCount);
-
         var plane = $(this).attr('class').replace(/^plane\s+/, '');
         var elem = $(this).parent();
         var pos = blockPos(blocks, elem);
-        $('#debug2').html('[mousedown] pos: ' + pos.z + ',' + pos.y + ',' + pos.x);
-        blockTrack.push({pos:pos, plane: plane});
+        //$('#debug2').html('[mousedown] pos: ' + pos.z + ',' + pos.y + ',' + pos.x);
+        blockTrack.push({pos:pos, plane: $(this)});
         planeMousedown = true;
     }).mouseover(function (ev) {
-        ev.stopPropagation();
-
+        eCount ++;
+        console.log("plane eCount: " + eCount);
         if (!planeMousedown) {
             return;
         }
-        eCount ++;
-        $('#debug').html('[mouseover] eCount: ' + eCount);
+
         if (eClasses.length == 4) eClasses.shift();
         eClasses.push($(this).attr('class'));
-        $('#debug2').html('[mouseover] attr: ' + eClasses.join(','));
+        //$('#debug2').html('[mouseover] attr: ' + eClasses.join(','));
 
-        var plane = $(this).attr('class').replace(/^plane\s+/, '');
         var elem = $(this).parent();
         var pos = blockPos(blocks, elem);
-        blockTrack.push({pos: pos, plane: plane});
+        blockTrack.push({pos: pos, plane: $(this)});
     }).mouseup(function (ev) {
-        ev.stopPropagation();
-
         if (!planeMousedown) {
             return;
         }
-        var debugTrack = [];
-        $.each(blockTrack, function(i, b) {
-            debugTrack.push('[' + b.plane + ' ' + b.pos.z + ',' + b.pos.y + ',' + b.pos.x + ']');
-        });
-        $('#debug3').html('[mouseup] block track: ' + debugTrack.join(', '));
 
-        var plane = blockTrack[0].plane;
+        if (blockTrack.length < 2) {
+            blockTrack = [];
+            planeMousedown = false;
+            return;
+        }
+        //var debugTrack = [];
+        //$.each(blockTrack, function(i, b) {
+        //    var plane = b.plane.attr('class').replace(/plane\s+/, '');
+        //    debugTrack.push('[' + plane + ' ' + b.pos.z + ',' + b.pos.y + ',' + b.pos.x + ']');
+        //});
+        //$('#debug3').html('[mouseup] block track: ' + debugTrack.join(', '));
+
         var pos0 = blockTrack[0].pos;
         var pos1 = blockTrack[1].pos;
-        if (plane === 'red') {
-            if ((pos0.y == 0 && pos1.y == 0 && pos0.x < pos1.x) ||
-                (pos0.y == 2 && pos1.y == 2 && pos0.x > pos1.x) ||
-                (pos0.x == 0 && pos1.x == 0 && pos0.y > pos1.y) ||
-                (pos0.x == 2 && pos1.x == 2 && pos0.y < pos1.y)    ) {
-                rotateFace('z', pos0.z, 1);
+        var mBlock0 = getTransformMatrix(blocks[pos0.z][pos0.y][pos0.x].elem);
+        console.log('[mouseup] mBlock0: ' + mBlock0.m);
+        var mPlane0 = getTransformMatrix(blockTrack[0].plane);
+        console.log('[mouseup] mPlane0: ' + mPlane0.m);
+        var m = mBlock0.multiply(mPlane0);
+        var t, sign;
+        for (t = 0; t < 3; ++ t) {
+            if (m.m[3][t] == 150) {
+                sign = 1;
+                break;
+            } else if (m.m[3][t] == -150) {
+                sign = -1;
+                break;
+            }
+        } 
+        console.log("[mouseup] t=" + t + ", sign=" + sign + ", m.m=" + m.m);
+        var cw1, cw2;
+        if ( t == 1) {
+            //rotateFace('
+        } else if (t == 2) {
+            cw1 = pos1.x - pos0.x;
+            cw2 = pos0.y - pos1.y;
+            if (cw1) {
+                rotateFace('y', pos0.y, m.m[t][2] * cw1);
+            } else if (cw2) {
+                rotateFace('x', pos0.x, m.m[t][2] * cw2);
             }
         }
         
@@ -352,9 +386,6 @@ $(document).ready(function () {
     var start, end;
     var theta = 0, phi = 0;
     $("#stage").mousedown(function (ev) {
-        $('#debug2').html('eCount: ' + eCount);
-        eCount ++;
-
         mousedown = true;
         x0 = ev.pageX;
         y0 = ev.pageY;
