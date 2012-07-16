@@ -380,18 +380,38 @@ $(document).ready(function () {
         } 
         //console.log("[mouseup] t=" + t + ", sign=" + sign + ", m.m=" + m.m);
         var cw1, cw2;
-        if ( t == 1) {
-            //rotateFace('
-        } else if (t == 2) {
-            cw1 = pos1.x - pos0.x;
-            cw2 = pos0.y - pos1.y;
-            console.log("cw1,cw2: " + cw1 + ',' + cw2);
+        if ( t == 0) { // x plane
+            cw1 = (pos1.y - pos0.y) * m.m[3][t];
+            cw2 = (pos0.z - pos1.z) * m.m[3][t];
+            cw1 = cw1 == 0 ? 0 : cw1 > 1 ? 1 : -1;
+            cw2 = cw2 == 0 ? 0 : cw2 > 1 ? 1 : -1;
             if (cw1) {
-                rotateFace('y', pos0.y, m.m[t][2] * cw1);
+                rotateFace('z', pos0.z, cw1);
             } else if (cw2) {
-                rotateFace('x', pos0.x, m.m[t][2] * cw2);
+                rotateFace('y', pos0.y, cw2);
             }
-        }
+        } else if (t == 1) { // y plane
+            cw1 = (pos0.x - pos1.x) * m.m[3][t];
+            cw2 = (pos1.z - pos0.z) * m.m[3][t];
+            cw1 = cw1 == 0 ? 0 : cw1 > 1 ? 1 : -1;
+            cw2 = cw2 == 0 ? 0 : cw2 > 1 ? 1 : -1;
+            if (cw1) {
+                rotateFace('z', pos0.z, cw1);
+            } else if (cw2) {
+                rotateFace('x', pos0.x, cw2);
+            }
+        } else if (t == 2) { // z plane
+            cw1 = (pos1.x - pos0.x) * m.m[3][t];
+            cw2 = (pos0.y - pos1.y) * m.m[3][t];
+            cw1 = cw1 == 0 ? 0 : cw1 > 1 ? 1 : -1;
+            cw2 = cw2 == 0 ? 0 : cw2 > 1 ? 1 : -1;
+            //console.log("cw1,cw2: " + cw1 + ',' + cw2);
+            if (cw1) {
+                rotateFace('y', pos0.y, cw1);
+            } else if (cw2) {
+                rotateFace('x', pos0.x, cw2);
+            }
+        } 
         
         blockTrack = [];
         planeMousedown = false;
