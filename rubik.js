@@ -1,9 +1,9 @@
 function Matrix(m) {
+    var i, j;
+    this.m = [];
     if (typeof m == 'string') {
-        var i, j;
 
         m = m.replace(/ /g, '');
-        this.m = [];
         var mm = m.split(',');
 
         if (mm.length == 6) { // 3x2 -> 4x4
@@ -30,7 +30,15 @@ function Matrix(m) {
             this.m[3] = m[3].concat([0,1]);
         } else {
             this.n = m.length;
-            this.m = m; 
+            this.m = m; // no copy 
+        }
+    } else if (m instanceof Matrix) {
+        this.n = m.n;
+        for (i = 0; i < this.n; i ++) {
+            this.m[i] = [];
+            for (j = 0; j < this.n; j ++) {
+                this.m[i][j] = m.m[i][j];
+            }
         }
     }
 }
@@ -191,7 +199,7 @@ $(document).ready(function () {
         }
     }
 
-   function rotateBlock(blocks, m, x, y, z) {
+    function rotateBlock(blocks, m, x, y, z) {
         var result;
         var x2,y2,z2,x3,y3,z3;
         var m2;
@@ -212,13 +220,21 @@ $(document).ready(function () {
             }
         }
 
-        m2 = getTransformMatrix(blocks[z2][y2][x2].elem);
-        m2 = 'matrix3d(' + m2.toString() + ')';
-        m2  = m2.replace(/(,[^,]+){4}$/, ',');
-        m2 += (x2 - 1) * 100 + ',' + (y2 - 1) * 100 + ',' + (z2 - 1) * 100 + ',1)';
-        m2 += ' ' + 'matrix3d(' + m.toString() + ')';
         $(blocks[z2][y2][x2].elem).appendTo($('#face'));
-        return {elem: blocks[z2][y2][x2].elem, m: m2};
+        m2 = getTransformMatrix(blocks[z2][y2][x2].elem);
+        if (z2 == 2 && y2 == 0 && x2 == 0)
+            console.log("m2: " + m2);
+        m2.m[3][0] = 0;
+        m2.m[3][1] = 0;
+        m2.m[3][2] = 0;
+        var mm = m2.multiply(m);
+        mm.m[3][0] = (x2 - 1) * 100;
+        mm.m[3][1] = (y2 - 1) * 100;
+        mm.m[3][2] = (z2 - 1) * 100;
+        if (z2 == 2 && y2 == 0 && x2 == 0)
+            console.log("mm: " + mm);
+
+        return {elem: blocks[z2][y2][x2].elem, m: mm};
     }
 
     function rotateFace(xyz, num, cw) { // cw == 1 -- clockwise; cw == -1 -- counter-clockwise
@@ -261,7 +277,7 @@ $(document).ready(function () {
             var block;
             while (block = faceBlocks.pop()) {
                 $(block.elem).appendTo($('#cube'));
-                $(block.elem).css("-webkit-transform", block.m);
+                $(block.elem).css("-webkit-transform", "matrix3d(" + block.m + ")");
             }
             $('#face').css('-webkit-transform', 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)');
         }, 500);
@@ -316,7 +332,7 @@ $(document).ready(function () {
         planeMousedown = true;
     }).mouseover(function (ev) {
         eCount ++;
-        console.log("plane eCount: " + eCount);
+        //console.log("plane eCount: " + eCount);
         if (!planeMousedown) {
             return;
         }
@@ -348,9 +364,9 @@ $(document).ready(function () {
         var pos0 = blockTrack[0].pos;
         var pos1 = blockTrack[1].pos;
         var mBlock0 = getTransformMatrix(blocks[pos0.z][pos0.y][pos0.x].elem);
-        console.log('[mouseup] mBlock0: ' + mBlock0.m);
+        //console.log('[mouseup] mBlock0: ' + mBlock0.m);
         var mPlane0 = getTransformMatrix(blockTrack[0].plane);
-        console.log('[mouseup] mPlane0: ' + mPlane0.m);
+        //console.log('[mouseup] mPlane0: ' + mPlane0.m);
         var m = mBlock0.multiply(mPlane0);
         var t, sign;
         for (t = 0; t < 3; ++ t) {
@@ -362,13 +378,14 @@ $(document).ready(function () {
                 break;
             }
         } 
-        console.log("[mouseup] t=" + t + ", sign=" + sign + ", m.m=" + m.m);
+        //console.log("[mouseup] t=" + t + ", sign=" + sign + ", m.m=" + m.m);
         var cw1, cw2;
         if ( t == 1) {
             //rotateFace('
         } else if (t == 2) {
             cw1 = pos1.x - pos0.x;
             cw2 = pos0.y - pos1.y;
+            console.log("cw1,cw2: " + cw1 + ',' + cw2);
             if (cw1) {
                 rotateFace('y', pos0.y, m.m[t][2] * cw1);
             } else if (cw2) {
