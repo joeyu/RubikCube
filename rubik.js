@@ -1,3 +1,5 @@
+var theta = 0, phi = 0;
+
 function Matrix(m) {
     var i, j;
     this.m = [];
@@ -421,7 +423,6 @@ $(document).ready(function () {
     var x0, y0, x1, y1;
     var mX, mY, mXY;
     var start, end;
-    var theta = 0, phi = 0;
     $("#stage").mousedown(function (ev) {
         mousedown = true;
         x0 = ev.pageX;
@@ -448,9 +449,11 @@ $(document).ready(function () {
     });
 });
 
-function resetShape() {
-    $("#cube").css("-webkit-transition", "-webkit-transform 2s, opacity 2s");
+function resetCube() {
+    theta = 0;
+    phi = 0;
+    $("#cube").css("-webkit-transition", "-webkit-transform 1s, opacity 2s");
     $("#cube").css("-webkit-transform", 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)');
     //$("#cube").delay(2000).css("-webkit-transition", "");
-    setTimeout(function() {$("#cube").css("-webkit-transition", "");}, 2000);
+    setTimeout(function() {$("#cube").css("-webkit-transition", "");}, 1000);
 }

@@ -24,7 +24,9 @@
                 width: 100%;
                 height: 100%;
                 -webkit-transition: -webkit-transform 2s;
+                /*
                 -webkit-transform-style: preserve-3d;
+                */
             }
             #cube {
                 position: relative;
@@ -123,7 +125,7 @@
         <div class="controls">
             <h1>Animations, Transitions and 3D Transforms</h1>
             <div>
-                <button onclick="resetShape()">Reset</button>
+                <button onclick="resetCube()">Reset the cube</button>
             </div>
             <!--
             <div style="position:relative">
@@ -135,8 +137,7 @@
         </div>
         <div id="container">
             <div id="stage">
-                <div id="cube" class="cube backfaces">
-                </div>
+                <div id="cube" class="backfaces"/>
             </div>
         </div>
     </body>
