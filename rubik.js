@@ -225,18 +225,18 @@ $(document).ready(function () {
         $(blocks[z2][y2][x2].elem).appendTo($('#face'));
         m2 = getTransformMatrix(blocks[z2][y2][x2].elem);
         if (z2 == 2 && y2 == 0 && x2 == 0)
-            console.log("m2: " + m2);
+            console.log("[rotateBlock] m2: " + m2);
         m2.m[3][0] = 0;
         m2.m[3][1] = 0;
         m2.m[3][2] = 0;
-        var mm = m2.multiply(m);
-        mm.m[3][0] = (x2 - 1) * 100;
-        mm.m[3][1] = (y2 - 1) * 100;
-        mm.m[3][2] = (z2 - 1) * 100;
+        m2 = m.multiply(m2);
+        m2.m[3][0] = (x2 - 1) * 100;
+        m2.m[3][1] = (y2 - 1) * 100;
+        m2.m[3][2] = (z2 - 1) * 100;
         if (z2 == 2 && y2 == 0 && x2 == 0)
-            console.log("mm: " + mm);
+            console.log("[rotateBlock] m2: " + m2);
 
-        return {elem: blocks[z2][y2][x2].elem, m: mm};
+        return {elem: blocks[z2][y2][x2].elem, m: m2};
     }
 
     function rotateFace(xyz, num, cw) { // cw == 1 -- clockwise; cw == -1 -- counter-clockwise
