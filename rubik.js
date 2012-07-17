@@ -191,12 +191,10 @@ $(document).ready(function () {
                     }
 
                     ePlane.css("-webkit-transform", m);
-                    ePlane.css("-moz-transform", m);
                     ePlane.appendTo(eBlock);
                 }
                 m = 'matrix3d(1,0,0,0,  0,1,0,0,  0,0,1,0,  ' + (x - 1) * 100 + ',' + (y - 1) * 100 + ',' + (z - 1) * 100 + ',1)';
                 eBlock.css("-webkit-transform", m);
-                eBlock.css("-moz-transform", m);
                 eBlock.appendTo("#cube");
                 blocks[z][y][x] = {elem: eBlock, elemSaved: null};
             }
@@ -231,14 +229,14 @@ $(document).ready(function () {
         m2.m[3][0] = 0;
         m2.m[3][1] = 0;
         m2.m[3][2] = 0;
-        m2 = m.multiply(m2);
-        m2.m[3][0] = (x2 - 1) * 100;
-        m2.m[3][1] = (y2 - 1) * 100;
-        m2.m[3][2] = (z2 - 1) * 100;
+        var mm = m2.multiply(m);
+        mm.m[3][0] = (x2 - 1) * 100;
+        mm.m[3][1] = (y2 - 1) * 100;
+        mm.m[3][2] = (z2 - 1) * 100;
         if (z2 == 2 && y2 == 0 && x2 == 0)
-            console.log("mm: " + m2);
+            console.log("mm: " + mm);
 
-        return {elem: blocks[z2][y2][x2].elem, m: m2};
+        return {elem: blocks[z2][y2][x2].elem, m: mm};
     }
 
     function rotateFace(xyz, num, cw) { // cw == 1 -- clockwise; cw == -1 -- counter-clockwise
@@ -277,16 +275,13 @@ $(document).ready(function () {
             }
         }
         $('#face').css('-webkit-transform', 'matrix3d(' + m.toString() + ')');
-        $('#face').css('-moz-transform', 'matrix3d(' + m.toString() + ')');
         setTimeout(function() {
             var block;
             while (block = faceBlocks.pop()) {
                 $(block.elem).appendTo($('#cube'));
                 $(block.elem).css("-webkit-transform", "matrix3d(" + block.m + ")");
-                $(block.elem).css("-moz-transform", "matrix3d(" + block.m + ")");
             }
             $('#face').css('-webkit-transform', 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)');
-            $('#face').css('-moz-transform', 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)');
         }, 500);
     }
 
@@ -311,7 +306,6 @@ $(document).ready(function () {
             m = elem;
         } else {
             m = elem.css("-webkit-transform");
-            m = elem.css("-moz-transform");
         }
         if (m.search('matrix3d') != 0) { // is 3x2 matrix
             m = m.replace(/^matrix\((.*)\)$/, '$1');
@@ -447,7 +441,6 @@ $(document).ready(function () {
         mXY = mX.multiply(mY);
         m = "matrix3d(" + mXY.toString() + ")";
         $("#cube").css("-webkit-transform", m);
-        $("#cube").css("-moz-transform", m);
         x0 = x1;
         y0 = y1;
     }).mouseup(function (ev) {
@@ -460,9 +453,7 @@ function resetCube() {
     theta = 0;
     phi = 0;
     $("#cube").css("-webkit-transition", "-webkit-transform 1s, opacity 2s");
-    $("#cube").css("-moz-transition", "-webkit-transform 1s, opacity 2s");
     $("#cube").css("-webkit-transform", 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)');
-    $("#cube").css("-moz-transform", 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)');
     //$("#cube").delay(2000).css("-webkit-transition", "");
-    setTimeout(function() {$("#cube").css("-webkit-transition", ""); $("#cube").css("-moz-transition", "");}, 1000);
+    setTimeout(function() {$("#cube").css("-webkit-transition", "");}, 1000);
 }
