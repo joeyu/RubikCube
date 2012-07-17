@@ -318,29 +318,12 @@ $(document).ready(function () {
         return m;
     }
 
-    
+    // User intraction with the cube 
     var blockTrack = [];
-    var planeMousedown = false;
-    $(".plane").mousedown(function (ev) {
-        ev.stopPropagation(); // stop bubbling
-        var elem = $(this).parent();
-        var pos = blockPos(blocks, elem);
-        blockTrack.push({pos: pos, plane: $(this)});
-        planeMousedown = true;
-    }).mouseover(function (ev) { // track movement across blocks
-        if (!planeMousedown) { // move by draging mouse
-            return;
-        }
-        var elem = $(this).parent();
-        var pos = blockPos(blocks, elem);
-        blockTrack.push({pos: pos, plane: $(this)});
-    }).mouseup(function (ev) {
-        if (!planeMousedown) {
-            return;
-        }
-        if (blockTrack.length < 2) {
+
+    function onPlaneMouseupTouchend() {
+        if (blockTrack.length < 2) { //FIXME: shall also track 2 sides of only 1 block
             blockTrack = [];
-            planeMousedown = false;
             return;
         }
         
@@ -350,7 +333,7 @@ $(document).ready(function () {
         var mPlane0 = getTransformMatrix(blockTrack[0].plane);
         var m = mBlock0.multiply(mPlane0);
         var t, sign;
-        for (t = 0; t < 3; ++ t) {
+        for (t = 0; t < 3; ++ t) { // get the facing of the touched plane
             if (m.m[3][t] == 150) {
                 sign = 1;
                 break;
@@ -359,9 +342,9 @@ $(document).ready(function () {
                 break;
             }
         } 
-        //console.log("[mouseup] t=" + t + ", sign=" + sign + ", m.m=" + m.m);
+        // rotate according to the track
         var cw1, cw2;
-        if ( t == 0) { // x plane
+        if (t == 0) { // x plane
             cw1 = (pos1.y - pos0.y) * sign;
             cw2 = (pos0.z - pos1.z) * sign;
             if (cw1) {
@@ -388,13 +371,41 @@ $(document).ready(function () {
         } 
         
         blockTrack = []; // release the tracking record
+    }
+    var planeMousedown = false;
+    $(".plane").mousedown(function (ev) {
+        ev.stopPropagation(); // stop bubbling
+        var elem = $(this).parent();
+        var pos = blockPos(blocks, elem);
+        blockTrack.push({pos: pos, plane: $(this)});
+        planeMousedown = true;
+    }).mouseover(function (ev) { // track movement across blocks
+        if (!planeMousedown) { // move by draging mouse
+            return;
+        }
+        var elem = $(this).parent();
+        var pos = blockPos(blocks, elem);
+        blockTrack.push({pos: pos, plane: $(this)});
+    }).mouseup(function (ev) {
+        if (!planeMousedown) {
+            return;
+        }
         planeMousedown = false;
+        onPlaneMouseupTouchend();
     });
 
     var mousedown = false;
     var x0, y0, x1, y1;
-    var mX, mY, mXY;
-    var start, end;
+    var theta = 0, phi = 0;
+    function onStageMousemoveTouchmove(x0, y0, x1, y1) {
+        theta += ((x1 - x0) / 400) * Math.PI;
+        phi   += ((y0 - y1) / 400) * Math.PI;
+        var mX = new Matrix([[1,0,0,0], [0,Math.cos(phi),Math.sin(phi),0], [0,-Math.sin(phi),Math.cos(phi),0], [0, 0, 0, 1]]);
+        var mY = new Matrix([[Math.cos(theta),0,-Math.sin(theta), 0], [0,1,0,0,], [Math.sin(theta),0,Math.cos(theta),0], [0, 0, 0, 1]]);
+        var mXY = mX.multiply(mY);
+        var m = "matrix3d(" + mXY.toString() + ")";
+        $("#cube").css("-webkit-transform", m);
+    }
     $("#stage").mousedown(function (ev) {
         mousedown = true;
         x0 = ev.pageX;
@@ -403,22 +414,33 @@ $(document).ready(function () {
         if (!mousedown) {
             return;
         }
-        
         x1 = ev.pageX;
         y1 = ev.pageY;
-        theta += ((x1 - x0) / 400) * Math.PI;
-        phi   += ((y0 - y1) / 400) * Math.PI;
-        mX = new Matrix([[1,0,0,0], [0,Math.cos(phi),Math.sin(phi),0], [0,-Math.sin(phi),Math.cos(phi),0], [0, 0, 0, 1]]);
-        mY = new Matrix([[Math.cos(theta),0,-Math.sin(theta), 0], [0,1,0,0,], [Math.sin(theta),0,Math.cos(theta),0], [0, 0, 0, 1]]);
-        mXY = mX.multiply(mY);
-        m = "matrix3d(" + mXY.toString() + ")";
-        $("#cube").css("-webkit-transform", m);
+        onStageMousemoveTouchmove(x0, y0, x1, y1);
         x0 = x1;
         y0 = y1;
     }).mouseup(function (ev) {
         mousedown = false;
         planeMousedown = false;
+    }).multiTouch({
+        touchmove: function(ev) {
+            var self = this;
+            
+            //var context = self.context;//event.target.getContext("2d");
+            var origEvent = ev.originalEvent;
+            var touch = origEvent.changedTouches;
+            var id          = touch.identifier,
+                touch0      = self.mTouches[id][self.mTouches[id].length - 1],
+                touch1      = self.mTouches[id][self.mTouches[id].length - 2],
+                offset      = self.offset();
+                x0          = touch.clientX - offset.left,
+                y0          = touch.clientY - offset.top,
+                x1          = touchPre.clientX - offset.left,
+                y1          = touchPre.clientY - offset.top;
+            onStageMousemoveTouchmove(x0, y0, x1, y1);
+        }
     });
+
 });
 
 function resetCube() {
