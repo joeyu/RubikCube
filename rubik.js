@@ -319,30 +319,18 @@ $(document).ready(function () {
     }
 
     
-    var eCount = 0;
-    var eClasses = [];
     var blockTrack = [];
     var planeMousedown = false;
     $(".plane").mousedown(function (ev) {
-        ev.stopPropagation();
-
-        var plane = $(this).attr('class').replace(/^plane\s+/, '');
+        ev.stopPropagation(); // stop bubbling
         var elem = $(this).parent();
         var pos = blockPos(blocks, elem);
-        //$('#debug2').html('[mousedown] pos: ' + pos.z + ',' + pos.y + ',' + pos.x);
-        blockTrack.push({pos:pos, plane: $(this)});
+        blockTrack.push({pos: pos, plane: $(this)});
         planeMousedown = true;
-    }).mouseover(function (ev) {
-        eCount ++;
-        //console.log("plane eCount: " + eCount);
-        if (!planeMousedown) {
+    }).mouseover(function (ev) { // track movement across blocks
+        if (!planeMousedown) { // move by draging mouse
             return;
         }
-
-        if (eClasses.length == 4) eClasses.shift();
-        eClasses.push($(this).attr('class'));
-        //$('#debug2').html('[mouseover] attr: ' + eClasses.join(','));
-
         var elem = $(this).parent();
         var pos = blockPos(blocks, elem);
         blockTrack.push({pos: pos, plane: $(this)});
@@ -350,25 +338,16 @@ $(document).ready(function () {
         if (!planeMousedown) {
             return;
         }
-
         if (blockTrack.length < 2) {
             blockTrack = [];
             planeMousedown = false;
             return;
         }
-        //var debugTrack = [];
-        //$.each(blockTrack, function(i, b) {
-        //    var plane = b.plane.attr('class').replace(/plane\s+/, '');
-        //    debugTrack.push('[' + plane + ' ' + b.pos.z + ',' + b.pos.y + ',' + b.pos.x + ']');
-        //});
-        //$('#debug3').html('[mouseup] block track: ' + debugTrack.join(', '));
-
+        
         var pos0 = blockTrack[0].pos;
         var pos1 = blockTrack[1].pos;
         var mBlock0 = getTransformMatrix(blocks[pos0.z][pos0.y][pos0.x].elem);
-        //console.log('[mouseup] mBlock0: ' + mBlock0.m);
         var mPlane0 = getTransformMatrix(blockTrack[0].plane);
-        //console.log('[mouseup] mPlane0: ' + mPlane0.m);
         var m = mBlock0.multiply(mPlane0);
         var t, sign;
         for (t = 0; t < 3; ++ t) {
@@ -383,31 +362,24 @@ $(document).ready(function () {
         //console.log("[mouseup] t=" + t + ", sign=" + sign + ", m.m=" + m.m);
         var cw1, cw2;
         if ( t == 0) { // x plane
-            cw1 = (pos1.y - pos0.y) * m.m[3][t];
-            cw2 = (pos0.z - pos1.z) * m.m[3][t];
-            cw1 = cw1 == 0 ? 0 : cw1 > 1 ? 1 : -1;
-            cw2 = cw2 == 0 ? 0 : cw2 > 1 ? 1 : -1;
+            cw1 = (pos1.y - pos0.y) * sign;
+            cw2 = (pos0.z - pos1.z) * sign;
             if (cw1) {
                 rotateFace('z', pos0.z, cw1);
             } else if (cw2) {
                 rotateFace('y', pos0.y, cw2);
             }
         } else if (t == 1) { // y plane
-            cw1 = (pos0.x - pos1.x) * m.m[3][t];
-            cw2 = (pos1.z - pos0.z) * m.m[3][t];
-            cw1 = cw1 == 0 ? 0 : cw1 > 1 ? 1 : -1;
-            cw2 = cw2 == 0 ? 0 : cw2 > 1 ? 1 : -1;
+            cw1 = (pos0.x - pos1.x) * sign;
+            cw2 = (pos1.z - pos0.z) * sign;
             if (cw1) {
                 rotateFace('z', pos0.z, cw1);
             } else if (cw2) {
                 rotateFace('x', pos0.x, cw2);
             }
         } else if (t == 2) { // z plane
-            cw1 = (pos1.x - pos0.x) * m.m[3][t];
-            cw2 = (pos0.y - pos1.y) * m.m[3][t];
-            cw1 = cw1 == 0 ? 0 : cw1 > 1 ? 1 : -1;
-            cw2 = cw2 == 0 ? 0 : cw2 > 1 ? 1 : -1;
-            //console.log("cw1,cw2: " + cw1 + ',' + cw2);
+            cw1 = (pos1.x - pos0.x) * sign;
+            cw2 = (pos0.y - pos1.y) * sign;
             if (cw1) {
                 rotateFace('y', pos0.y, cw1);
             } else if (cw2) {
@@ -415,7 +387,7 @@ $(document).ready(function () {
             }
         } 
         
-        blockTrack = [];
+        blockTrack = []; // release the tracking record
         planeMousedown = false;
     });
 
