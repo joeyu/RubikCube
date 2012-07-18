@@ -169,22 +169,22 @@ $(document).ready(function () {
                     ePlane.addClass(plane);
                     switch (plane) {
                     case 'green':
-                        m = 'matrix3d(0,0,-1,0,  0,1,0,0,  1,0,0,0,  50,0,0,1)';
+                        m = 'matrix3d(0,0,-1,0,  0,1,0,0,  1,0,0,0,  32,0,0,1)';
                         break;
                     case 'blue':
-                        m = 'matrix3d(0,0,1,0,  0,1,0,0,  -1,0,0,0,  -50,0,0,1)';
+                        m = 'matrix3d(0,0,1,0,  0,1,0,0,  -1,0,0,0,  -32,0,0,1)';
                         break;
                     case 'white':
-                        m = 'matrix3d(1,0,0,0,  0,0,-1,0,  0,1,0,0,  0,50,0,1)';
+                        m = 'matrix3d(1,0,0,0,  0,0,-1,0,  0,1,0,0,  0,32,0,1)';
                         break;
                     case 'yellow':
-                        m = 'matrix3d(1,0,0,0,  0,0,1,0,  0,-1,0,0,  0,-50,0,1)';
+                        m = 'matrix3d(1,0,0,0,  0,0,1,0,  0,-1,0,0,  0,-32,0,1)';
                         break;
                     case 'red':
-                        m = 'matrix3d(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,50,1)';
+                        m = 'matrix3d(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,32,1)';
                         break;
                     case 'orange':
-                        m = 'matrix3d(-1,0,0,0,  0,1,0,0,  0,0,-1,0,  0,0,-50,1)';
+                        m = 'matrix3d(-1,0,0,0,  0,1,0,0,  0,0,-1,0,  0,0,-32,1)';
                         break;
                     default:
                         break;
@@ -193,7 +193,7 @@ $(document).ready(function () {
                     ePlane.css("-webkit-transform", m);
                     ePlane.appendTo(eBlock);
                 }
-                m = 'matrix3d(1,0,0,0,  0,1,0,0,  0,0,1,0,  ' + (x - 1) * 100 + ',' + (y - 1) * 100 + ',' + (z - 1) * 100 + ',1)';
+                m = 'matrix3d(1,0,0,0,  0,1,0,0,  0,0,1,0,  ' + (x - 1) * 64 + ',' + (y - 1) * 64 + ',' + (z - 1) * 64 + ',1)';
                 eBlock.css("-webkit-transform", m);
                 eBlock.appendTo("#cube");
                 blocks[z][y][x] = {elem: eBlock, elemSaved: null};
@@ -230,9 +230,9 @@ $(document).ready(function () {
         m2.m[3][1] = 0;
         m2.m[3][2] = 0;
         m2 = m.multiply(m2);
-        m2.m[3][0] = (x2 - 1) * 100;
-        m2.m[3][1] = (y2 - 1) * 100;
-        m2.m[3][2] = (z2 - 1) * 100;
+        m2.m[3][0] = (x2 - 1) * 64;
+        m2.m[3][1] = (y2 - 1) * 64;
+        m2.m[3][2] = (z2 - 1) * 64;
         if (z2 == 2 && y2 == 0 && x2 == 0)
             console.log("[rotateBlock] m2: " + m2);
 
@@ -334,10 +334,10 @@ $(document).ready(function () {
         var m = mBlock0.multiply(mPlane0);
         var t, sign;
         for (t = 0; t < 3; ++ t) { // get the facing of the touched plane
-            if (m.m[3][t] == 150) {
+            if (m.m[3][t] == 96) {
                 sign = 1;
                 break;
-            } else if (m.m[3][t] == -150) {
+            } else if (m.m[3][t] == -96) {
                 sign = -1;
                 break;
             }
@@ -425,22 +425,28 @@ $(document).ready(function () {
     }).multiTouch({
         touchmove: function(ev) {
             var self = this;
+            $('#debug').html("fuck");
             
-            //var context = self.context;//event.target.getContext("2d");
             var origEvent = ev.originalEvent;
-            var touch = origEvent.changedTouches;
-            var id          = touch.identifier,
-                touch0      = self.mTouches[id][self.mTouches[id].length - 1],
-                touch1      = self.mTouches[id][self.mTouches[id].length - 2],
-                offset      = self.offset();
-                x0          = touch.clientX - offset.left,
-                y0          = touch.clientY - offset.top,
-                x1          = touchPre.clientX - offset.left,
-                y1          = touchPre.clientY - offset.top;
-            onStageMousemoveTouchmove(x0, y0, x1, y1);
+            //console.log("origEvent: " + ev.originalEvent);
+            $.each(origEvent.changedTouches, function(i, touch) {
+            	
+            	if ($.inArray(touch, origEvent.targetTouches) >= 0) { // filter 
+                    $('#debug2').html("fuck");
+                    var id      = touch.identifier,
+                    touch0      = self.mTouches[id][self.mTouches[id].length - 2],
+                    touch1      = self.mTouches[id][self.mTouches[id].length - 1],
+                    offset      = self.offset();
+                    x0          = touch0.clientX - offset.left,
+                    y0          = touch0.clientY - offset.top,
+                    x1          = touch1.clientX - offset.left,
+                    y1          = touch1.clientY - offset.top;
+                    $('#debug').html("x0, y0, x1, y1: " + x0 + ',' + y0 + ',' + x1 + ',' + y1);
+                    onStageMousemoveTouchmove(x0, y0, x1, y1);
+                }
+            });
         }
-    });
-
+    }); // multiTouch
 });
 
 function resetCube() {
