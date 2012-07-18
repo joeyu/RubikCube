@@ -392,6 +392,25 @@ $(document).ready(function () {
         }
         planeMousedown = false;
         onPlaneMouseupTouchend();
+    }).multiTouch({
+        touchstart: function(ev) {
+            var elem = $(this).parent();
+            var pos = blockPos(blocks, elem);
+            $('#debug2').html("pos: " + pos.z + pos.y + pos.x);
+            blockTrack.push({pos: pos, plane: $(this)});
+        },
+        touchmove: function(ev) {
+            ev.stopPropagation(); // stop bubbling
+        },
+        touchend: function(ev) {
+            ev.stopPropagation(); // stop bubbling
+            var elem = $(this).parent();
+            $('#debug').html("elem: " + elem.attr('class'));
+            var pos = blockPos(blocks, elem);
+            $('#debug3').html("pos: " + pos.z + pos.y + pos.x);
+            blockTrack.push({pos: pos, plane: $(this)});
+            onPlaneMouseupTouchend();
+        },
     });
 
     var mousedown = false;
@@ -425,14 +444,12 @@ $(document).ready(function () {
     }).multiTouch({
         touchmove: function(ev) {
             var self = this;
-            $('#debug').html("fuck");
             
             var origEvent = ev.originalEvent;
             //console.log("origEvent: " + ev.originalEvent);
             $.each(origEvent.changedTouches, function(i, touch) {
             	
             	if ($.inArray(touch, origEvent.targetTouches) >= 0) { // filter 
-                    $('#debug2').html("fuck");
                     var id      = touch.identifier,
                     touch0      = self.mTouches[id][self.mTouches[id].length - 2],
                     touch1      = self.mTouches[id][self.mTouches[id].length - 1],

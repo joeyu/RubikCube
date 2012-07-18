@@ -73,11 +73,13 @@ $.fn.multiTouch = function (callbacks) {
         var self = $(this);
         self.callbacks = callbacks;
         self.mTouches = [];
-        self.on('touchstart', onTouchStart);    
-        self.on('touchmove',  onTouchMove);    
-        self.on('touchend', onTouchEnd);    
+        self.on('touchstart', onTouchstart);    
+        self.on('touchmove',  onTouchmove);    
+        self.on('touchend', onTouchend);    
+        self.on('touchenter', onTouchenter);    
+        self.on('touchleave', onTouchleave);    
         
-        function onTouchStart(event) {
+        function onTouchstart(event) {
             var origEvent = event.originalEvent;
             $.each(origEvent.changedTouches, function(i, touch) {
                 // filter target touches
@@ -97,7 +99,7 @@ $.fn.multiTouch = function (callbacks) {
             origEvent.preventDefault();
         }
 
-        function onTouchMove(event) {
+        function onTouchmove(event) {
             var origEvent = event.originalEvent;
             $.each(origEvent.changedTouches, function(i, touch) {
                 // filter target touches
@@ -119,7 +121,7 @@ $.fn.multiTouch = function (callbacks) {
             origEvent.preventDefault();
         }
         
-        function onTouchEnd(event) {
+        function onTouchend(event) {
             if (self.callbacks.touchend) {
                 self.callbacks.touchend.call(self, event);
             }
@@ -135,6 +137,37 @@ $.fn.multiTouch = function (callbacks) {
         
             origEvent.preventDefault();
         }
-    });
+        
+        function onTouchenter(event) {
+            var origEvent = event.originalEvent;
+            $.each(origEvent.changedTouches, function(i, touch) {
+                // filter target touches
+                if ($.inArray(touch, origEvent.targetTouches) >= 0) {
+                }
+            });
+        
+            if (self.callbacks.touchenter) {
+                self.callbacks.touchenter.call(self, event);
+            }
+            $('#debug3').html("fuck");
+            
+            origEvent.preventDefault();
+        }    
+        
+        function onTouchleave(event) {
+            var origEvent = event.originalEvent;
+            $.each(origEvent.changedTouches, function(i, touch) {
+                // filter target touches
+                if (touch.target === event.target) {
+                }
+            });
+        
+            if (self.callbacks.touchleave) {
+                self.callbacks.touchleave.call(self, event);
+            }
+            
+            origEvent.preventDefault();
+        }    
+    }); // $(this).each();
 };
 })(jQuery);
